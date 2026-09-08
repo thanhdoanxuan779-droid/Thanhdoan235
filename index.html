@@ -985,6 +985,8 @@ button{border:0;outline:0}
 
     <div class="position-column">
 
+      <!-- ================= GIẢI ĐẶC BIỆT ================= -->
+
       <button type="button" class="position-btn db-tram-ngan" data-pos="dbTramNgan">
         <span>Giải ĐB</span>
         <span>TRĂM NGÀN</span>
@@ -1064,6 +1066,8 @@ button{border:0;outline:0}
         <span>TỔNG 5 SỐ</span>
         <span>ĐB</span>
       </button>
+
+      <!-- ================= GIẢI NHẤT ================= -->
 
       <button type="button" class="position-btn" data-pos="g1Van">
         <span>Giải Nhất</span>
@@ -1243,6 +1247,7 @@ const STATIONS={
 
   mb:{
     title:"XS MIỀN BẮC VN",
+
     days:{
       T2:[["Hà Nội","Giải thưởng thứ 2"]],
       T3:[["Quảng Ninh","Giải thưởng thứ 3"]],
@@ -1252,85 +1257,102 @@ const STATIONS={
       T7:[["Nam Định","Giải thưởng thứ 7"]],
       CN:[["Thái Bình","Giải thưởng chủ nhật"]]
     }
+
   },
 
   mt:{
     title:"SX MIỀN TRUNG VN",
+
     days:{
       T2:[
         ["Phú Yên","Giải thưởng thứ 2"],
         ["Thừa Thiên Huế","Giải thưởng thứ 2"]
       ],
+
       T3:[
         ["Đắk Lắk","Giải thưởng thứ 3"],
         ["Quảng Nam","Giải thưởng thứ 3"]
       ],
+
       T4:[
         ["Đà Nẵng","Giải thưởng thứ 4"],
         ["Khánh Hòa","Giải thưởng thứ 4"]
       ],
+
       T5:[
         ["Bình Định","Giải thưởng thứ 5"],
         ["Quảng Bình","Giải thưởng thứ 5"],
         ["Quảng Trị","Giải thưởng thứ 5"]
       ],
+
       T6:[
         ["Gia Lai","Giải thưởng thứ 6"],
         ["Ninh Thuận","Giải thưởng thứ 6"]
       ],
+
       T7:[
         ["Đà Nẵng","Giải thưởng thứ 7"],
         ["Quảng Ngãi","Giải thưởng thứ 7"],
         ["Đắk Nông","Giải thưởng thứ 7"]
       ],
+
       CN:[
         ["Kon Tum","Giải thưởng chủ nhật"],
         ["Khánh Hòa","Giải thưởng chủ nhật"],
         ["Thừa Thiên Huế","Giải thưởng chủ nhật"]
       ]
     }
+
   },
 
   mn:{
     title:"SX MIỀN NAM VN",
+
     days:{
       T2:[
         ["TP. Hồ Chí Minh","Giải thưởng thứ 2"],
         ["Đồng Tháp","Giải thưởng thứ 2"],
         ["Cà Mau","Giải thưởng thứ 2"]
       ],
+
       T3:[
         ["Bến Tre","Giải thưởng thứ 3"],
         ["Vũng Tàu","Giải thưởng thứ 3"],
         ["Bạc Liêu","Giải thưởng thứ 3"]
       ],
+
       T4:[
         ["Đồng Nai","Giải thưởng thứ 4"],
         ["Cần Thơ","Giải thưởng thứ 4"],
         ["Sóc Trăng","Giải thưởng thứ 4"]
       ],
+
       T5:[
         ["Tây Ninh","Giải thưởng thứ 5"],
         ["An Giang","Giải thưởng thứ 5"],
         ["Bình Thuận","Giải thưởng thứ 5"]
       ],
+
       T6:[
         ["Vĩnh Long","Giải thưởng thứ 6"],
         ["Bình Dương","Giải thưởng thứ 6"],
         ["Trà Vinh","Giải thưởng thứ 6"]
       ],
+
       T7:[
         ["TP. Hồ Chí Minh","Giải thưởng thứ 7"],
         ["Long An","Giải thưởng thứ 7"],
         ["Bình Phước","Giải thưởng thứ 7"],
         ["Hậu Giang","Giải thưởng thứ 7"]
       ],
+
       CN:[
         ["Tiền Giang","Giải thưởng chủ nhật"],
         ["Kiên Giang","Giải thưởng chủ nhật"],
         ["Đà Lạt","Giải thưởng chủ nhật"]
       ]
     }
+
   }
 
 };
@@ -1340,7 +1362,7 @@ const STATIONS={
 ===================================================== */
 
 const STORE_KEY="XS_CAU_FULL77999";
-
+const STORAGE_KEY=STORE_KEY;
 const AUTO_KQ_API=
   "https://thanhdoan235.thanhdoanxuan79.workers.dev";
 
@@ -1350,6 +1372,7 @@ let currentStation="";
 let currentPosition="dbVan";
 let currentType="tx";
 
+let autoSyncTimer=null;
 let autoSyncBusy=false;
 
 /* =====================================================
@@ -1363,25 +1386,6 @@ function digitLength(type){
     (
       currentRegion==="mt" ||
       currentRegion==="mn"
-    )
-  ){
-    return 6;
-  }
-
-  return 5;
-
-}
-
-function digitLengthForRegion(
-  region,
-  type
-){
-
-  if(
-    type==="db" &&
-    (
-      region==="mt" ||
-      region==="mn"
     )
   ){
     return 6;
@@ -1574,21 +1578,10 @@ function getKey(){
 
 function getDateDayCode(isoDate){
 
-  if(!isoDate){
-    return "";
-  }
-
   const d=
     new Date(
-      String(isoDate).slice(0,10)+
-      "T00:00:00Z"
+      isoDate+"T00:00:00Z"
     );
-
-  if(
-    Number.isNaN(d.getTime())
-  ){
-    return "";
-  }
 
   const day=
     d.getUTCDay();
@@ -1611,10 +1604,7 @@ function getDateDayCode(isoDate){
    SO SÁNH TÊN ĐÀI ONLINE
 ===================================================== */
 
-function stationOnlineMatch(
-  localName,
-  onlineName
-){
+function stationOnlineMatch(localName,onlineName){
 
   const a=
     String(localName||"")
@@ -1641,13 +1631,10 @@ function stationOnlineMatch(
   }
 
   const aliases={
-
     "tp ho chi minh":"ho chi minh",
     "ho chi minh":"tp ho chi minh",
-
     "thua thien hue":"hue",
     "hue":"thua thien hue"
-
   };
 
   return (
@@ -1658,127 +1645,73 @@ function stationOnlineMatch(
 }
 
 /* =====================================================
-   THÊM KẾT QUẢ ONLINE VÀO DATA BẤT KỲ
+   THÊM KẾT QUẢ ONLINE
 ===================================================== */
 
-function addOnlineResultToData(
-  data,
-  item,
-  region,
-  day,
-  station
-){
+function addOnlineResult(data,item){
+
+  if(!item || !item.isoDate){
+    return false;
+  }
+
+  const db=
+    String(item.db||"").replace(/\D/g,"");
+
+  const g1=
+    String(item.g1||"").replace(/\D/g,"");
+
+  const dbLength=
+    digitLength("db");
 
   if(
-    !item ||
-    !item.isoDate
+    !new RegExp(
+      "^\\d{"+dbLength+"}$"
+    ).test(db) ||
+    !/^\d{5}$/.test(g1)
   ){
     return false;
   }
 
-  if(
-    String(item.region||"")
-      .toLowerCase() !==
-    String(region||"")
-      .toLowerCase()
-  ){
-    return false;
-  }
+  const date=
+    String(item.isoDate);
 
-  const itemDay=
-    getDateDayCode(
-      String(item.isoDate)
-    );
+  const dayCode=
+    getDateDayCode(date);
 
-  if(itemDay!==day){
+  if(dayCode!==currentDay){
     return false;
   }
 
   if(
     !stationOnlineMatch(
-      station,
+      currentStation,
       item.province
     )
   ){
     return false;
   }
 
-  const db=
-    String(item.db||"")
-      .replace(/\D/g,"");
-
-  const g1=
-    String(item.g1||"")
-      .replace(/\D/g,"");
-
-  const dbLength=
-    digitLengthForRegion(
-      region,
-      "db"
-    );
-
-  if(
-    !new RegExp(
-      "^\\d{"+dbLength+"}$"
-    ).test(db)
-  ){
-    return false;
-  }
-
-  if(
-    !/^\d{5}$/.test(g1)
-  ){
-    return false;
-  }
-
-  if(!Array.isArray(data.db)){
-    data.db=[];
-  }
-
-  if(!Array.isArray(data.g1)){
-    data.g1=[];
-  }
-
-  const date=
-    String(item.isoDate)
-      .slice(0,10);
-
   const dbExists=
     data.db.some(
       x=>
         x &&
-        String(x.sourceDate||"")===
-        date
+        x.sourceDate===date
     );
 
   const g1Exists=
     data.g1.some(
       x=>
         x &&
-        String(x.sourceDate||"")===
-        date
+        x.sourceDate===date
     );
 
   const created=
     new Date(
-      date+
-      "T00:00:00+07:00"
+      date+"T00:00:00+07:00"
     ).getTime();
 
-  const safeCreated=
-    Number.isFinite(created)
-      ?created
-      :Date.now();
-
   const rowId=
-    "online_"+
-    region+
-    "_"+
-    day+
-    "_"+
-    normalize(station)+
-    "_"+
-    date;
+    "online_"+date;
 
   let changed=false;
 
@@ -1786,37 +1719,16 @@ function addOnlineResultToData(
 
     data.db.push({
 
-      id:
-        rowId+
-        "_db",
-
-      rowId:
-        rowId,
-
-      number:
-        db,
-
-      locked:
-        true,
-
-      created:
-        safeCreated,
-
-      sourceDate:
-        date,
-
-      sourceDateText:
-        item.date||"",
-
-      online:
-        true,
-
-      region:
-        region,
-
-      province:
-        item.province||
-        station
+      id:rowId+"_db",
+      rowId:rowId,
+      number:db,
+      locked:true,
+      created:created,
+      sourceDate:date,
+      sourceDateText:item.date||"",
+      online:true,
+      region:item.region||currentRegion,
+      province:item.province||currentStation
 
     });
 
@@ -1828,37 +1740,16 @@ function addOnlineResultToData(
 
     data.g1.push({
 
-      id:
-        rowId+
-        "_g1",
-
-      rowId:
-        rowId,
-
-      number:
-        g1,
-
-      locked:
-        true,
-
-      created:
-        safeCreated,
-
-      sourceDate:
-        date,
-
-      sourceDateText:
-        item.date||"",
-
-      online:
-        true,
-
-      region:
-        region,
-
-      province:
-        item.province||
-        station
+      id:rowId+"_g1",
+      rowId:rowId,
+      number:g1,
+      locked:true,
+      created:created,
+      sourceDate:date,
+      sourceDateText:item.date||"",
+      online:true,
+      region:item.region||currentRegion,
+      province:item.province||currentStation
 
     });
 
@@ -1869,310 +1760,619 @@ function addOnlineResultToData(
   return changed;
 
 }
-
 /* =====================================================
-   TẠO KEY CHO KẾT QUẢ ONLINE
+   HỖ TRỢ DỮ LIỆU WORKER
 ===================================================== */
 
-function getOnlineTargets(item){
+function workerDateToIso(date){
 
-  const targets=[];
+  const s=String(date||"").trim();
 
-  if(!item){
-    return targets;
+  if(!s){
+    return "";
   }
 
-  const region=
-    String(item.region||"")
+  /* ISO: 2026-09-08 */
+  let m=s.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})/
+  );
+
+  if(m){
+
+    return (
+      m[1]+"-"+
+      String(m[2]).padStart(2,"0")+"-"+
+      String(m[3]).padStart(2,"0")
+    );
+
+  }
+
+  /* DD/MM/YYYY hoặc DD-MM-YYYY */
+  m=s.match(
+    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/
+  );
+
+  if(m){
+
+    return (
+      m[3]+"-"+
+      String(m[2]).padStart(2,"0")+"-"+
+      String(m[1]).padStart(2,"0")
+    );
+
+  }
+
+  return "";
+
+}
+
+
+function validNumberFor(
+  type,
+  number,
+  region
+){
+
+  const value=
+    String(number||"")
+      .replace(/\D/g,"");
+
+  const r=
+    String(region||"").toLowerCase();
+
+  let len=5;
+
+  if(
+    type==="db" &&
+    (
+      r==="mt" ||
+      r==="mn"
+    )
+  ){
+    len=6;
+  }
+
+  if(type==="g1"){
+    len=5;
+  }
+
+  return (
+    new RegExp(
+      "^\\d{"+len+"}$"
+    ).test(value)
+  );
+
+}
+
+
+function getWorkerPrizeType(prize){
+
+  const s=
+    String(prize||"")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
       .toLowerCase()
+      .replace(/\s+/g," ")
       .trim();
 
   if(
-    !STATIONS[region]
+    s==="db" ||
+    s==="d.b" ||
+    s.includes("dac biet") ||
+    s.includes("giai db") ||
+    s.includes("giai dac biet")
   ){
-    return targets;
+
+    return "db";
+
+  }
+
+  if(
+    s==="1" ||
+    s==="g1" ||
+    s==="g.1" ||
+    s.includes("giai nhat") ||
+    s.includes("giai 1")
+  ){
+
+    return "g1";
+
+  }
+
+  return "";
+
+}
+
+
+function ensureStoreKey(
+  all,
+  key
+){
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+  }
+
+  if(!Array.isArray(all[key].db)){
+    all[key].db=[];
+  }
+
+  if(!Array.isArray(all[key].g1)){
+    all[key].g1=[];
+  }
+
+  return all[key];
+
+}
+
+
+function findFrontendStation(
+  region,
+  day,
+  workerStation
+){
+
+  const r=
+    String(region||"")
+      .toLowerCase();
+
+  const d=
+    String(day||"")
+      .toUpperCase();
+
+  const target=
+    normalize(workerStation);
+
+  const info=
+    STATIONS[r];
+
+  if(!info || !info.days[d]){
+    return "";
+  }
+
+  const found=
+    info.days[d].find(item=>{
+
+      const local=
+        normalize(item[0]);
+
+      return (
+        local===target ||
+        stationOnlineMatch(
+          item[0],
+          workerStation
+        )
+      );
+
+    });
+
+  return found
+    ?found[0]
+    :"";
+
+}
+
+
+function upsertWorkerPrize(
+  all,
+  type,
+  number,
+  isoDate,
+  sourceDate,
+  region,
+  station
+){
+
+  const r=
+    String(region||"")
+      .toLowerCase();
+
+  const day=
+    getDateDayCode(isoDate);
+
+  if(!day){
+    return false;
+  }
+
+  const localStation=
+    findFrontendStation(
+      r,
+      day,
+      station
+    );
+
+  if(!localStation){
+    return false;
+  }
+
+  const key=[
+    r,
+    day,
+    localStation
+  ].join("|");
+
+  const data=
+    ensureStoreKey(
+      all,
+      key
+    );
+
+  const value=
+    String(number||"")
+      .replace(/\D/g,"");
+
+  if(
+    !validNumberFor(
+      type,
+      value,
+      r
+    )
+  ){
+    return false;
+  }
+
+  const arr=
+    type==="db"
+      ?data.db
+      :data.g1;
+
+  const existing=
+    arr.find(
+      x=>
+        x &&
+        x.online===true &&
+        String(x.sourceDate||"")===isoDate
+    );
+
+  const created=
+    new Date(
+      isoDate+"T00:00:00+07:00"
+    ).getTime();
+
+  if(existing){
+
+    /*
+     * Nếu Worker có kết quả mới cho cùng ngày
+     * thì cập nhật số, không tạo dòng trùng.
+     */
+    existing.number=value;
+    existing.locked=true;
+    existing.created=created;
+    existing.sourceDate=isoDate;
+    existing.sourceDateText=
+      sourceDate ||
+      (
+        isoDate.split("-").reverse().join("/")
+      );
+    existing.online=true;
+    existing.region=r;
+    existing.province=localStation;
+
+    return true;
+
+  }
+
+  arr.push({
+
+    id:
+      "online_"+
+      type+
+      "_"+
+      isoDate,
+
+    rowId:
+      "online_"+
+      isoDate,
+
+    number:value,
+
+    locked:true,
+
+    created:created,
+
+    sourceDate:isoDate,
+
+    sourceDateText:
+      sourceDate ||
+      isoDate.split("-").reverse().join("/"),
+
+    online:true,
+
+    region:r,
+
+    province:localStation
+
+  });
+
+  return true;
+
+}
+
+
+function upsertWorkerGrouped(
+  all,
+  item
+){
+
+  const r=
+    String(item.region||"")
+      .toLowerCase();
+
+  const isoDate=
+    workerDateToIso(
+      item.date
+    );
+
+  if(!isoDate){
+    return false;
   }
 
   const day=
     getDateDayCode(
-      String(item.isoDate||"")
+      isoDate
     );
 
-  if(!day){
-    return targets;
+  const localStation=
+    findFrontendStation(
+      r,
+      day,
+      item.station
+    );
+
+  if(!localStation){
+    return false;
   }
 
-  const dayStations=
-    STATIONS[region]
-      .days?.[day]||[];
+  let changed=false;
 
-  dayStations.forEach(
-    stationInfo=>{
+  if(item.db!=null){
 
-      const station=
-        stationInfo?.[0]||"";
+    changed=
+      upsertWorkerPrize(
+        all,
+        "db",
+        item.db,
+        isoDate,
+        item.date,
+        r,
+        item.station
+      ) || changed;
 
-      if(
-        station &&
-        stationOnlineMatch(
-          station,
-          item.province
-        )
-      ){
+  }
 
-        targets.push({
+  if(item.g1!=null){
 
-          region:
-            region,
+    changed=
+      upsertWorkerPrize(
+        all,
+        "g1",
+        item.g1,
+        isoDate,
+        item.date,
+        r,
+        item.station
+      ) || changed;
 
-          day:
-            day,
+  }
 
-          station:
-            station
-
-        });
-
-      }
-
-    }
-  );
-
-  return targets;
+  return changed;
 
 }
 
-/* =====================================================
-   ĐỒNG BỘ TOÀN BỘ KẾT QUẢ ONLINE
-===================================================== */
 
-async function syncAllOnlineResults(){
+function upsertWorkerRow(
+  all,
+  item
+){
 
   if(
-    autoSyncBusy ||
-    !AUTO_KQ_API
+    !item ||
+    !item.prize ||
+    item.number==null
   ){
     return false;
   }
 
-  autoSyncBusy=true;
-
-  try{
-
-    const response=
-      await fetch(
-        AUTO_KQ_API+
-        "/latest?t="+
-        Date.now(),
-        {
-          method:"GET",
-          cache:"no-store",
-          headers:{
-            "Accept":
-              "application/json"
-          }
-        }
-      );
-
-    if(!response.ok){
-
-      throw new Error(
-        "HTTP "+
-        response.status
-      );
-
-    }
-
-    const result=
-      await response.json();
-
-    console.log(
-      "KQ Worker /latest:",
-      result
+  const type=
+    getWorkerPrizeType(
+      item.prize
     );
 
-    if(
-      !result ||
-      result.ok!==true ||
-      !Array.isArray(result.results)
-    ){
+  if(!type){
+    return false;
+  }
 
-      throw new Error(
-        "Dữ liệu /latest không hợp lệ"
-      );
+  const isoDate=
+    workerDateToIso(
+      item.date
+    );
 
-    }
+  if(!isoDate){
+    return false;
+  }
 
-    const all=
-      loadAll();
+  return upsertWorkerPrize(
+    all,
+    type,
+    item.number,
+    isoDate,
+    item.date,
+    item.region,
+    item.station
+  );
 
-    let changed=false;
-    let added=0;
+}
 
-    result.results.forEach(
-      item=>{
 
-        const targets=
-          getOnlineTargets(item);
+function sortOnlineStore(all){
 
-        targets.forEach(
-          target=>{
+  Object.keys(all||{})
+    .forEach(key=>{
 
-            const key=
-              [
-                target.region,
-                target.day,
-                target.station
-              ].join("|");
+      const data=
+        all[key];
 
-            if(!all[key]){
+      if(!data){
+        return;
+      }
 
-              all[key]={
-                db:[],
-                g1:[]
-              };
+      ["db","g1"].forEach(type=>{
 
-            }
+        if(!Array.isArray(data[type])){
+          data[type]=[];
+        }
 
-            if(
-              !Array.isArray(
-                all[key].db
-              )
-            ){
-              all[key].db=[];
-            }
-
-            if(
-              !Array.isArray(
-                all[key].g1
-              )
-            ){
-              all[key].g1=[];
-            }
-
-            const didAdd=
-              addOnlineResultToData(
-                all[key],
-                item,
-                target.region,
-                target.day,
-                target.station
-              );
-
-            if(didAdd){
-
-              added++;
-              changed=true;
-
-            }
-
-          }
+        data[type].sort(
+          (a,b)=>
+            (
+              Number(b?.created)||0
+            )-
+            (
+              Number(a?.created)||0
+            )
         );
 
-      }
-    );
+      });
 
-    if(changed){
-
-      Object.keys(all)
-        .forEach(key=>{
-
-          const data=
-            all[key];
-
-          if(
-            !data ||
-            typeof data!=="object"
-          ){
-            return;
-          }
-
-          if(
-            Array.isArray(data.db)
-          ){
-
-            data.db.sort(
-              (a,b)=>
-                Number(b?.created||0)-
-                Number(a?.created||0)
-            );
-
-          }
-
-          if(
-            Array.isArray(data.g1)
-          ){
-
-            data.g1.sort(
-              (a,b)=>
-                Number(b?.created||0)-
-                Number(a?.created||0)
-            );
-
-          }
-
-        });
-
-      saveAll(all);
-
-    }
-
-    console.log(
-      "Đồng bộ TOÀN BỘ KQ:",
-      "nguồn:",
-      result.results.length,
-      "mục;",
-      "thêm:",
-      added
-    );
-
-    if(
-      currentStation
-    ){
-
-      loadLatest();
-
-    }
-
-    if(
-      inputScreen.style.display===
-      "flex"
-    ){
-
-      renderInputLists();
-
-    }
-
-    return true;
-
-  }catch(error){
-
-    console.log(
-      "Đồng bộ toàn bộ KQ lỗi:",
-      error
-    );
-
-    return false;
-
-  }finally{
-
-    autoSyncBusy=false;
-
-  }
+    });
 
 }
 
 /* =====================================================
-   ĐỒNG BỘ ĐÀI HIỆN TẠI
-   GIỮ LẠI ĐỂ TƯƠNG THÍCH
+   TỰ ĐỘNG LẤY KQ ONLINE
 ===================================================== */
 
 async function syncOnlineResults(){
+  try{
+    const url = AUTO_KQ_API + "/latest?t=" + Date.now();
 
-  return syncAllOnlineResults();
+    const res = await fetch(url, {
+      method:"GET",
+      cache:"no-store"
+    });
 
+    if(!res.ok){
+      console.log("Worker lỗi:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    if(!data || !data.ok || !Array.isArray(data.results)){
+      console.log("Worker không có dữ liệu hợp lệ");
+      return;
+    }
+
+    const all = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || "{}"
+    );
+
+    let accepted = 0;
+
+    for(const item of data.results){
+
+      if(!item) continue;
+
+      const region = String(item.region || "").toUpperCase();
+      const station = String(item.station || "").trim();
+      const date = workerDateToIso(item.date);
+
+      if(!region || !station || !date) continue;
+
+      const day = getDateDayCode(date);
+
+      if(!day) continue;
+
+      const key = [
+        region,
+        day,
+        station
+      ].join("|");
+
+      ensureStoreKey(all,key);
+
+      /*
+       * Worker dạng từng dòng:
+       * prize + number
+       */
+      if(item.prize && item.number != null){
+
+        const type = getWorkerPrizeType(item.prize);
+
+        if(type && validNumberFor(type,item.number,region)){
+
+          upsertWorkerPrize(
+            all,
+            type,
+            String(item.number),
+            date,
+            item.date,
+            region,
+            station
+          );
+
+          accepted++;
+        }
+
+        continue;
+      }
+
+      /*
+       * Hỗ trợ luôn Worker dạng nhóm:
+       * {db: "...", g1: "..."}
+       */
+      if(item.db != null || item.g1 != null){
+
+        upsertWorkerGrouped(all,{
+          region,
+          station,
+          date,
+          db:item.db,
+          g1:item.g1,
+          source:item.source || ""
+        });
+
+        accepted++;
+      }
+    }
+
+    sortOnlineStore(all);
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(all)
+    );
+
+    console.log(
+      "Đồng bộ Worker:",
+      data.results.length,
+      "dòng / nhận:",
+      accepted
+    );
+
+    if(
+      typeof cauScreen !== "undefined" &&
+      cauScreen &&
+      !cauScreen.classList.contains("hidden")
+    ){
+      if(
+        typeof currentRegion !== "undefined" &&
+        typeof currentDay !== "undefined" &&
+        typeof currentStation !== "undefined"
+      ){
+        renderCau();
+      }
+    }
+
+  }catch(err){
+    console.log("Lỗi đồng bộ Worker:",err);
+  }
 }
-
 /* =====================================================
    TÍNH NGÀY ISO
 ===================================================== */
@@ -2184,8 +2384,22 @@ function getIsoDateForCurrentDay(){
     const now=
       new Date();
 
-    const todayString=
-      new Intl.DateTimeFormat(
+    const current=
+      getDateDayCode(
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:"Asia/Ho_Chi_Minh",
+            year:"numeric",
+            month:"2-digit",
+            day:"2-digit"
+          }
+        ).format(now)
+      );
+
+    if(current===currentDay){
+
+      return new Intl.DateTimeFormat(
         "en-CA",
         {
           timeZone:"Asia/Ho_Chi_Minh",
@@ -2194,15 +2408,6 @@ function getIsoDateForCurrentDay(){
           day:"2-digit"
         }
       ).format(now);
-
-    const current=
-      getDateDayCode(
-        todayString
-      );
-
-    if(current===currentDay){
-
-      return todayString;
 
     }
 
@@ -2221,11 +2426,7 @@ function getIsoDateForCurrentDay(){
       new Date(now);
 
     const diff=
-      (
-        target-
-        d.getDay()+
-        7
-      )%7;
+      (target-d.getDay()+7)%7;
 
     d.setDate(
       d.getDate()-diff
@@ -2277,6 +2478,21 @@ function getIsoDateForCurrentDay(){
 
 }
 
+function startAutoSync(){
+
+  if(autoSyncTimer){
+
+    clearInterval(
+      autoSyncTimer
+    );
+
+    autoSyncTimer=null;
+
+  }
+
+  syncOnlineResults();
+
+}
 /* =====================================================
    ĐẢM BẢO DỮ LIỆU
 ===================================================== */
@@ -2313,10 +2529,7 @@ function ensureCurrent(){
 
   let changed=false;
 
-  function normalizeArray(
-    arr,
-    type
-  ){
+  function normalizeArray(arr,type){
 
     const len=
       digitLength(type);
@@ -2355,8 +2568,7 @@ function ensureCurrent(){
         if(!item.rowId){
 
           item.rowId=
-            "legacy_"+
-            i;
+            "legacy_"+i;
 
           changed=true;
 
@@ -2379,9 +2591,7 @@ function ensureCurrent(){
 
           item.locked=
             re.test(
-              String(
-                item.number||""
-              )
+              String(item.number||"")
             );
 
           changed=true;
@@ -2453,18 +2663,22 @@ document
 
         btn.classList.add("active");
 
+        if(autoSyncTimer){
+
+          clearInterval(
+            autoSyncTimer
+          );
+
+          autoSyncTimer=null;
+
+        }
+
         currentRegion=
           btn.dataset.region;
 
         currentPosition="dbVan";
 
         renderStations();
-
-        /*
-         * Không cần tải riêng từng đài.
-         * Dữ liệu toàn bộ miền đã được
-         * syncAllOnlineResults() lưu vào máy.
-         */
 
       }
     );
@@ -2549,10 +2763,7 @@ function renderStations(){
    MỞ ĐÀI
 ===================================================== */
 
-function openStation(
-  day,
-  station
-){
+function openStation(day,station){
 
   currentDay=day;
   currentStation=station;
@@ -2605,16 +2816,9 @@ function openStation(
     )
     .classList.add("active");
 
-  /*
-   * Hiển thị dữ liệu đã lưu trước.
-   */
   loadLatest();
 
-  /*
-   * Đồng bộ lại toàn bộ KQ.
-   * Không chờ fetch xong mới mở màn hình.
-   */
-  syncAllOnlineResults();
+  startAutoSync();
 
 }
 
@@ -2627,6 +2831,16 @@ document
   .addEventListener(
     "click",
     ()=>{
+
+      if(autoSyncTimer){
+
+        clearInterval(
+          autoSyncTimer
+        );
+
+        autoSyncTimer=null;
+
+      }
 
       cauScreen.style.display=
         "none";
@@ -2644,10 +2858,7 @@ document
    MỚI NHẤT -> CŨ NHẤT
 ===================================================== */
 
-function newest(
-  list,
-  type
-){
+function newest(list,type){
 
   const len=
     digitLength(type);
@@ -2742,10 +2953,7 @@ function loadLatest(){
    LỊCH SỬ
 ===================================================== */
 
-function renderHistory(
-  box,
-  list
-){
+function renderHistory(box,list){
 
   box.innerHTML="";
 
@@ -3128,27 +3336,27 @@ function getDigits(){
 
   };
 
+  /*
+   * MB dùng mapping 5 số:
+   * Vạn 0 / Ngàn 1 / Trăm 2 / Trục 3 / ĐV 4
+   */
   if(
     currentRegion==="mb" &&
     currentPosition.startsWith("db")
   ){
 
     const mbMap={
-
       dbVan:0,
       dbNgan:1,
       dbTram:2,
       dbTruc:3,
       dbDv:4
-
     };
 
     const mbIndex=
       mbMap[currentPosition];
 
-    if(
-      mbIndex===undefined
-    ){
+    if(mbIndex===undefined){
       return [];
     }
 
@@ -3170,9 +3378,7 @@ function getDigits(){
   const index=
     map[currentPosition];
 
-  if(
-    index===undefined
-  ){
+  if(index===undefined){
     return [];
   }
 
@@ -3689,31 +3895,22 @@ function updatePredictionButtons(){
 
   if(currentType==="tx"){
 
-    predictX.textContent=
-      "KỲ SAU S";
-
-    predictT.textContent=
-      "KỲ SAU B";
+    predictX.textContent="KỲ SAU S";
+    predictT.textContent="KỲ SAU B";
 
   }
 
   else if(currentType==="cl"){
 
-    predictX.textContent=
-      "KỲ SAU O";
-
-    predictT.textContent=
-      "KỲ SAU E";
+    predictX.textContent="KỲ SAU O";
+    predictT.textContent="KỲ SAU E";
 
   }
 
   else if(currentType==="ps"){
 
-    predictX.textContent=
-      "KỲ SAU C";
-
-    predictT.textContent=
-      "KỲ SAU P";
+    predictX.textContent="KỲ SAU C";
+    predictT.textContent="KỲ SAU P";
 
   }
 
@@ -3765,15 +3962,11 @@ predictX.addEventListener(
     e.preventDefault();
     e.stopPropagation();
 
-    predictX.classList.remove(
-      "flash"
-    );
+    predictX.classList.remove("flash");
 
     void predictX.offsetWidth;
 
-    predictX.classList.add(
-      "flash"
-    );
+    predictX.classList.add("flash");
 
     setPrediction("X");
 
@@ -3787,15 +3980,11 @@ predictT.addEventListener(
     e.preventDefault();
     e.stopPropagation();
 
-    predictT.classList.remove(
-      "flash"
-    );
+    predictT.classList.remove("flash");
 
     void predictT.offsetWidth;
 
-    predictT.classList.add(
-      "flash"
-    );
+    predictT.classList.add("flash");
 
     setPrediction("T");
 
@@ -3929,9 +4118,7 @@ function drawCau(){
         empty.style.height="24px";
         empty.style.flex="none";
 
-        column.appendChild(
-          empty
-        );
+        column.appendChild(empty);
 
       }
 
@@ -3939,9 +4126,7 @@ function drawCau(){
 
     if(hasCell){
 
-      board.appendChild(
-        column
-      );
+      board.appendChild(column);
 
     }
 
@@ -3972,9 +4157,7 @@ function drawCau(){
       empty.style.height="24px";
       empty.style.flex="none";
 
-      emptyColumn.appendChild(
-        empty
-      );
+      emptyColumn.appendChild(empty);
 
     }
 
@@ -4043,17 +4226,13 @@ function drawCau(){
         )+
         "px";
 
-      board.appendChild(
-        mark
-      );
+      board.appendChild(mark);
 
     }
 
   }
 
-  cauArea.appendChild(
-    board
-  );
+  cauArea.appendChild(board);
 
 }
 
@@ -4208,10 +4387,7 @@ function buildRows(){
   const map=
     new Map();
 
-  function add(
-    arr,
-    type
-  ){
+  function add(arr,type){
 
     arr.forEach(
       (item,index)=>{
@@ -4266,20 +4442,11 @@ function buildRows(){
 
   }
 
-  add(
-    data.db,
-    "db"
-  );
-
-  add(
-    data.g1,
-    "g1"
-  );
+  add(data.db,"db");
+  add(data.g1,"g1");
 
   return Array
-    .from(
-      map.values()
-    )
+    .from(map.values())
     .sort(
       (a,b)=>
         (Number(b.created)||0)-
@@ -4295,9 +4462,7 @@ function buildRows(){
 function renderInputLists(){
 
   const inputGrid=
-    document.getElementById(
-      "inputGrid"
-    );
+    document.getElementById("inputGrid");
 
   inputGrid.innerHTML="";
 
@@ -4398,9 +4563,7 @@ function parsePasteNumbers(
     .replace(/\r/g," ")
     .replace(/\n/g," ")
     .split(/[\s,;]+/)
-    .map(
-      x=>x.trim()
-    )
+    .map(x=>x.trim())
     .filter(
       x=>re.test(x)
     );
@@ -4426,10 +4589,7 @@ function buildRowsFromData(data){
   const map=
     new Map();
 
-  function add(
-    arr,
-    type
-  ){
+  function add(arr,type){
 
     arr.forEach(
       (item,index)=>{
@@ -4484,20 +4644,11 @@ function buildRowsFromData(data){
 
   }
 
-  add(
-    db,
-    "db"
-  );
-
-  add(
-    g1,
-    "g1"
-  );
+  add(db,"db");
+  add(g1,"g1");
 
   return Array
-    .from(
-      map.values()
-    )
+    .from(map.values())
     .sort(
       (a,b)=>
         (Number(b.created)||0)-
@@ -4516,9 +4667,7 @@ function createEmptyRow(
 ){
 
   const row=
-    createRowData(
-      created
-    );
+    createRowData(created);
 
   data.db.push(
     row.db
@@ -4635,46 +4784,26 @@ function pasteNumbers(
 
     data.db.push({
 
-      id:
-        rowId+"_db",
-
-      rowId:
-        rowId,
-
-      number:
-        "",
-
-      locked:
-        false,
-
-      created:
-        created
+      id:rowId+"_db",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
 
     });
 
     data.g1.push({
 
-      id:
-        rowId+"_g1",
-
-      rowId:
-        rowId,
-
-      number:
-        "",
-
-      locked:
-        false,
-
-      created:
-        created
+      id:rowId+"_g1",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
 
     });
 
     rows=
-      buildRowsFromData(
-        data
-      );
+      buildRowsFromData(data);
 
   }
 
@@ -4686,11 +4815,7 @@ function pasteNumbers(
   numbers.forEach(
     (number,i)=>{
 
-      if(
-        !re.test(
-          String(number)
-        )
-      ){
+      if(!re.test(String(number))){
         return;
       }
 
@@ -4723,17 +4848,10 @@ function pasteNumbers(
               .toString(36)
               .slice(2),
 
-          rowId:
-            row.rowId,
-
-          number:
-            "",
-
-          locked:
-            false,
-
-          created:
-            row.created
+          rowId:row.rowId,
+          number:"",
+          locked:false,
+          created:row.created
 
         };
 
@@ -4741,9 +4859,7 @@ function pasteNumbers(
 
       }
 
-      if(
-        item.locked===true
-      ){
+      if(item.locked===true){
         return;
       }
 
@@ -4794,9 +4910,7 @@ function createDateInputRow(
     row.g1?.sourceDate ||
     "";
 
-  function normalizeDate(
-    value
-  ){
+  function normalizeDate(value){
 
     const s=
       String(value||"")
@@ -4830,9 +4944,7 @@ function createDateInputRow(
 
   }
 
-  function parseDates(
-    text
-  ){
+  function parseDates(text){
 
     const raw=
       String(text||"")
@@ -4841,9 +4953,7 @@ function createDateInputRow(
     const parts=
       raw
         .split(/[\s,;]+/)
-        .map(
-          x=>x.trim()
-        )
+        .map(x=>x.trim())
         .filter(Boolean);
 
     const dates=[];
@@ -4863,9 +4973,7 @@ function createDateInputRow(
 
   }
 
-  function saveSingleDate(
-    date
-  ){
+  function saveSingleDate(date){
 
     const all=
       loadAll();
@@ -4929,9 +5037,7 @@ function createDateInputRow(
 
   }
 
-  function saveBulkDates(
-    dates
-  ){
+  function saveBulkDates(dates){
 
     if(
       !Array.isArray(dates) ||
@@ -4959,9 +5065,7 @@ function createDateInputRow(
       all[key];
 
     let rows=
-      buildRowsFromData(
-        data
-      );
+      buildRowsFromData(data);
 
     const startIndex=
       rows.findIndex(
@@ -5018,58 +5122,30 @@ function createDateInputRow(
 
       data.db.push({
 
-        id:
-          rowId+"_db",
-
-        rowId:
-          rowId,
-
-        number:
-          "",
-
-        locked:
-          false,
-
-        created:
-          created,
-
-        sourceDate:
-          "",
-
-        sourceDateText:
-          ""
+        id:rowId+"_db",
+        rowId:rowId,
+        number:"",
+        locked:false,
+        created:created,
+        sourceDate:"",
+        sourceDateText:""
 
       });
 
       data.g1.push({
 
-        id:
-          rowId+"_g1",
-
-        rowId:
-          rowId,
-
-        number:
-          "",
-
-        locked:
-          false,
-
-        created:
-          created,
-
-        sourceDate:
-          "",
-
-        sourceDateText:
-          ""
+        id:rowId+"_g1",
+        rowId:rowId,
+        number:"",
+        locked:false,
+        created:created,
+        sourceDate:"",
+        sourceDateText:""
 
       });
 
       rows=
-        buildRowsFromData(
-          data
-        );
+        buildRowsFromData(data);
 
     }
 
@@ -5139,15 +5215,11 @@ function createDateInputRow(
 
         input.value="";
 
-        saveBulkDates(
-          dates
-        );
+        saveBulkDates(dates);
 
-        requestAnimationFrame(
-          ()=>{
-            renderInputLists();
-          }
-        );
+        requestAnimationFrame(()=>{
+          renderInputLists();
+        });
 
         return;
 
@@ -5161,9 +5233,7 @@ function createDateInputRow(
         input.value=
           date;
 
-        saveSingleDate(
-          date
-        );
+        saveSingleDate(date);
 
         return;
 
@@ -5211,12 +5281,8 @@ function createDateInputRow(
         text=
           e.clipboardData
             ?(
-              e.clipboardData.getData(
-                "text/plain"
-              ) ||
-              e.clipboardData.getData(
-                "text"
-              ) ||
+              e.clipboardData.getData("text/plain") ||
+              e.clipboardData.getData("text") ||
               ""
             )
             :"";
@@ -5247,17 +5313,13 @@ function createDateInputRow(
 
       }
 
-      saveBulkDates(
-        dates
-      );
+      saveBulkDates(dates);
 
       input.value="";
 
-      requestAnimationFrame(
-        ()=>{
-          renderInputLists();
-        }
-      );
+      requestAnimationFrame(()=>{
+        renderInputLists();
+      });
 
     },
     true
@@ -5292,13 +5354,8 @@ function createDateInputRow(
     }
   );
 
-  box.appendChild(
-    input
-  );
-
-  column.appendChild(
-    box
-  );
+  box.appendChild(input);
+  column.appendChild(box);
 
 }
 
@@ -5318,16 +5375,13 @@ function createInputRow(
 
   const digitRe =
     new RegExp(
-      "^\\d{" +
-      maxDigits +
-      "}$"
+      "^\\d{" + maxDigits + "}$"
     );
 
   const row =
     document.createElement("div");
 
-  row.className =
-    "data-row";
+  row.className = "data-row";
 
   row.dataset.rowId =
     rowId || "";
@@ -5338,38 +5392,27 @@ function createInputRow(
   const input =
     document.createElement("textarea");
 
-  input.className =
-    "row-input";
+  input.className = "row-input";
 
   if(type === "db"){
-    input.classList.add(
-      "db-input"
-    );
+    input.classList.add("db-input");
   }
 
   if(type === "g1"){
-    input.classList.add(
-      "g1-input"
-    );
+    input.classList.add("g1-input");
   }
 
-  input.inputMode =
-    "numeric";
+  input.inputMode = "numeric";
 
-  input.maxLength =
-    50000;
+  input.maxLength = 50000;
 
-  input.rows =
-    1;
+  input.rows = 1;
 
-  input.wrap =
-    "off";
+  input.wrap = "off";
 
-  input.autocomplete =
-    "off";
+  input.autocomplete = "off";
 
-  input.spellcheck =
-    false;
+  input.spellcheck = false;
 
   input.setAttribute(
     "enterkeyhint",
@@ -5384,41 +5427,40 @@ function createInputRow(
 
   input.value =
     item
-      ?String(item.number||"")
-      :"";
+      ? String(item.number || "")
+      : "";
 
-  input.readOnly =
-    false;
+  /*
+    KHÔNG tự khóa khi nhập đủ số.
+    Cho phép người dùng sửa lại số đã nhập sai.
+  */
 
-  input.classList.remove(
-    "locked"
-  );
+  input.readOnly = false;
 
-  row.appendChild(
-    input
-  );
+  input.classList.remove("locked");
 
-  column.appendChild(
-    row
-  );
+
+  row.appendChild(input);
+
+  column.appendChild(row);
+
 
   /* =========================
      PASTE
-  ========================= */
+     ========================= */
 
   input.addEventListener(
     "paste",
     function(e){
 
       e.preventDefault();
+
       e.stopPropagation();
 
       const text =
         e.clipboardData
-          ?e.clipboardData.getData(
-            "text"
-          )
-          :"";
+          ? e.clipboardData.getData("text")
+          : "";
 
       const numbers =
         parsePasteNumbers(
@@ -5430,7 +5472,8 @@ function createInputRow(
         return;
       }
 
-      if(numbers.length>1){
+
+      if(numbers.length > 1){
 
         pasteNumbers(
           type,
@@ -5438,7 +5481,7 @@ function createInputRow(
           numbers
         );
 
-        input.value="";
+        input.value = "";
 
         requestAnimationFrame(
           ()=>{
@@ -5449,9 +5492,10 @@ function createInputRow(
         return;
       }
 
-      if(numbers.length===1){
 
-        const number=
+      if(numbers.length === 1){
+
+        const number =
           numbers[0];
 
         if(item){
@@ -5472,7 +5516,12 @@ function createInputRow(
 
         }
 
-        input.readOnly=false;
+        /*
+          KHÔNG lock ở đây.
+          Cho phép sửa tiếp nếu nhập nhầm.
+        */
+
+        input.readOnly = false;
 
         input.classList.remove(
           "locked"
@@ -5490,9 +5539,10 @@ function createInputRow(
     true
   );
 
+
   /* =========================
      INPUT
-  ========================= */
+     ========================= */
 
   input.addEventListener(
     "input",
@@ -5500,8 +5550,9 @@ function createInputRow(
 
       const raw =
         String(
-          input.value||""
+          input.value || ""
         );
+
 
       const bulkNumbers =
         parsePasteNumbers(
@@ -5509,8 +5560,9 @@ function createInputRow(
           type
         );
 
+
       if(
-        bulkNumbers.length>1
+        bulkNumbers.length > 1
       ){
 
         pasteNumbers(
@@ -5519,7 +5571,7 @@ function createInputRow(
           bulkNumbers
         );
 
-        input.value="";
+        input.value = "";
 
         requestAnimationFrame(
           ()=>{
@@ -5530,8 +5582,9 @@ function createInputRow(
         return;
       }
 
+
       if(
-        bulkNumbers.length===1 &&
+        bulkNumbers.length === 1 &&
         /[\s,;\n\r]/.test(raw)
       ){
 
@@ -5541,7 +5594,7 @@ function createInputRow(
           bulkNumbers
         );
 
-        input.value="";
+        input.value = "";
 
         requestAnimationFrame(
           ()=>{
@@ -5552,16 +5605,15 @@ function createInputRow(
         return;
       }
 
+
       let value =
         raw
           .replace(/\D/g,"")
-          .slice(
-            0,
-            maxDigits
-          );
+          .slice(0,maxDigits);
 
-      input.value=
-        value;
+
+      input.value = value;
+
 
       if(item){
 
@@ -5571,13 +5623,23 @@ function createInputRow(
           value
         );
 
-        return;
+        /*
+          QUAN TRỌNG:
+          Không lock khi đủ số.
+        */
 
+        return;
       }
 
+
+      /*
+        Dòng mới:
+        nhập đủ số thì tạo dữ liệu,
+        nhưng vẫn để ô nhập mở để sửa.
+      */
+
       if(
-        value.length===
-        maxDigits
+        value.length === maxDigits
       ){
 
         addNumber(
@@ -5586,7 +5648,7 @@ function createInputRow(
           rowId
         );
 
-        input.readOnly=false;
+        input.readOnly = false;
 
         input.classList.remove(
           "locked"
@@ -5597,36 +5659,37 @@ function createInputRow(
     }
   );
 
+
   /* =========================
      ENTER
-  ========================= */
+     ========================= */
 
   input.addEventListener(
     "keydown",
     function(e){
 
-      if(e.key!=="Enter"){
+      if(e.key !== "Enter"){
         return;
       }
 
       e.preventDefault();
 
+
       const value =
         input.value
           .replace(/\D/g,"")
-          .slice(
-            0,
-            maxDigits
-          );
+          .slice(0,maxDigits);
 
-      input.value=
-        value;
+
+      input.value = value;
+
 
       if(
-        value.length!==maxDigits
+        value.length !== maxDigits
       ){
         return;
       }
+
 
       if(item){
 
@@ -5646,15 +5709,23 @@ function createInputRow(
 
       }
 
-      input.readOnly=false;
+
+      /*
+        KHÔNG khóa ô sau khi Enter.
+        Vẫn cho phép sửa.
+      */
+
+      input.readOnly = false;
 
       input.classList.remove(
         "locked"
       );
 
+
       if(document.activeElement){
         document.activeElement.blur();
       }
+
 
       renderInputLists();
 
@@ -5759,23 +5830,17 @@ function updateItem(
     return;
   }
 
-  if(
-    item.locked===true
-  ){
+  if(item.locked===true){
     return;
   }
 
   item.number=
     String(number)
       .replace(/\D/g,"")
-      .slice(
-        0,
-        maxDigits
-      );
+      .slice(0,maxDigits);
 
   if(
-    item.number.length===
-    maxDigits
+    item.number.length===maxDigits
   ){
 
     item.locked=true;
@@ -5802,10 +5867,7 @@ function addNumber(
   number=
     String(number)
       .replace(/\D/g,"")
-      .slice(
-        0,
-        maxDigits
-      );
+      .slice(0,maxDigits);
 
   if(
     number.length!==maxDigits
@@ -5871,17 +5933,14 @@ function addNumber(
 
   if(existing){
 
-    if(
-      existing.locked===true
-    ){
+    if(existing.locked===true){
       return;
     }
 
     existing.number=
       number;
 
-    existing.locked=
-      true;
+    existing.locked=true;
 
     saveAll(all);
 
@@ -5891,20 +5950,11 @@ function addNumber(
 
   arr.push({
 
-    id:
-      id,
-
-    rowId:
-      finalRowId,
-
-    number:
-      number,
-
-    locked:
-      true,
-
-    created:
-      now
+    id:id,
+    rowId:finalRowId,
+    number:number,
+    locked:true,
+    created:now
 
   });
 
@@ -5937,9 +5987,7 @@ function addRowTop(){
     Date.now();
 
   const row=
-    createRowData(
-      now
-    );
+    createRowData(now);
 
   all[key].db.push(
     row.db
@@ -6014,9 +6062,7 @@ function addRowBottom(){
     oldest-1;
 
   const row=
-    createRowData(
-      created
-    );
+    createRowData(created);
 
   data.db.push(
     row.db
@@ -6073,29 +6119,20 @@ document
 
     }
   );
-
-/* =====================================================
-   TỰ ĐỒNG BỘ KHI MẠNG TRỞ LẠI
-===================================================== */
-
 window.addEventListener(
   "online",
   ()=>{
-    syncAllOnlineResults();
+    syncOnlineResults();
   }
 );
-
 /* =====================================================
    KHỞI ĐỘNG
 ===================================================== */
 
 renderStations();
 
-/*
- * Hiển thị dữ liệu local trước.
- * Sau đó tải toàn bộ KQ mới từ Worker.
- */
-syncAllOnlineResults();
+/* Đồng bộ toàn bộ dữ liệu Worker khi mở app */
+syncOnlineResults();
 
 </script>
 
