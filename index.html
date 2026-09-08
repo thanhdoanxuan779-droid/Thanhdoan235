@@ -1,0 +1,5702 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>XS Việt Nam - Cầu</title>
+
+<style>
+
+.cau-board{position:relative}
+.cau-column{position:relative;z-index:1}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#eef1f5;
+  color:#222;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+}
+
+button,input,textarea{font-family:inherit}
+button{border:0;outline:0}
+
+.app{
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ================= CHỌN ĐÀI ================= */
+
+#stationScreen{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.header{
+  height:44px;
+  flex:none;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:5px 8px;
+}
+
+.user{
+  padding:5px 9px;
+  border-radius:14px;
+  background:#f1f3f6;
+  color:#777;
+  font-size:9px;
+}
+
+.header-icons{
+  display:flex;
+  gap:4px;
+}
+
+.h-icon{
+  width:27px;
+  height:27px;
+  border-radius:50%;
+  background:#f2f3f5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+}
+
+.station-title{
+  height:30px;
+  flex:none;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:flex;
+  align-items:center;
+  padding-left:8px;
+  color:#159eea;
+  font-size:9px;
+  font-weight:900;
+}
+
+.station-content{
+  flex:1;
+  min-height:0;
+  display:flex;
+  gap:4px;
+  padding:4px;
+  overflow:hidden;
+}
+
+.region-sidebar{
+  width:62px;
+  flex:none;
+  background:#fff;
+  border-radius:7px;
+  overflow:hidden;
+}
+
+.region-btn{
+  width:100%;
+  height:64px;
+  padding:2px;
+  background:#fff;
+  color:#666;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  font-size:6.5px;
+  line-height:8px;
+  font-weight:800;
+}
+
+.region-btn.active{
+  color:#159eea;
+  background:#e7f6ff;
+  border-left:3px solid #159eea;
+}
+
+.region-icon{
+  width:20px;
+  height:20px;
+  border:1px solid #aaa;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:5.5px;
+}
+
+.stations{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.station-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:4px;
+}
+
+.station-card{
+  position:relative;
+  height:70px;
+  background:#fff;
+  border-radius:8px;
+  text-align:left;
+  padding:6px;
+}
+
+.station-card:active{transform:scale(.98)}
+
+.station-number{
+  color:#159eea;
+  font-size:7px;
+  font-weight:900;
+}
+
+.station-name{
+  margin-top:3px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.station-day{
+  margin-top:3px;
+  color:#888;
+  font-size:6.5px;
+}
+
+.station-circle{
+  position:absolute;
+  right:5px;
+  bottom:5px;
+  width:21px;
+  height:21px;
+  border-radius:50%;
+  background:#e6f6ff;
+  color:#159eea;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:5.5px;
+  font-weight:900;
+}
+
+/* ================= MÀN CẦU ================= */
+
+#cauScreen{
+  display:none;
+  width:100%;
+  height:100%;
+  flex-direction:column;
+  padding:4px;
+}
+
+.cau-header{
+  height:34px;
+  flex:none;
+  background:#fff;
+  border-radius:7px;
+  display:flex;
+  align-items:center;
+  padding:2px 4px;
+  margin-bottom:4px;
+}
+
+.back{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:#f1f2f5;
+  color:#555;
+  font-size:20px;
+}
+
+.cau-station{margin-left:5px}
+
+.cau-station strong{
+  display:block;
+  font-size:10px;
+  font-weight:900;
+}
+
+.cau-station span{
+  display:block;
+  color:#888;
+  font-size:6.5px;
+}
+
+/* ================= KẾT QUẢ ================= */
+
+.result-top{
+  width:100%;
+  flex:none;
+  margin-bottom:4px;
+  background:#fff;
+  border:1px solid #cfd5dc;
+  border-radius:7px;
+  overflow:hidden;
+}
+
+.result-date-row{
+  width:100%;
+  height:29px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom:1px solid #cfd5dc;
+}
+
+.result-date{
+  color:#777;
+  font-size:11px;
+  font-weight:800;
+}
+
+.result-columns{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+
+.result-box{
+  min-width:0;
+  background:#fff;
+  overflow:hidden;
+}
+
+#dbResult{
+  border-right:1px solid #cfd5dc;
+}
+
+.result-title{
+  width:100%;
+  height:27px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+#dbResult .result-title{
+  color:#d00000;
+}
+
+#g1Result .result-title{
+  color:#111;
+}
+
+.result-current{
+  width:100%;
+  height:39px;
+  min-height:39px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.result-number{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:39px;
+  font-size:19px;
+  line-height:39px;
+  font-weight:900;
+  letter-spacing:1px;
+}
+
+#dbNumber{
+  color:#d00000;
+}
+
+#g1Number{
+  color:#111;
+}
+
+.history{
+  display:none;
+  max-height:150px;
+  overflow-y:auto;
+}
+
+.result-box.open .result-current{
+  display:none;
+}
+
+.result-box.open .history{
+  display:block;
+}
+
+.history-row{
+  height:22px;
+  border-top:1px solid #eee;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.history-number{
+  font-size:9px;
+  font-weight:900;
+  min-width:48px;
+  text-align:left;
+}
+
+.history-date{
+  width:75px;
+  color:#888;
+  font-size:7px;
+  text-align:right;
+  margin-right:7px;
+}
+
+#dbHistory .history-number{
+  color:#d00000;
+}
+
+#g1History .history-number{
+  color:#111;
+}
+
+/* ================= NHẬP ================= */
+
+.open-input{
+  width:100%;
+  height:27px;
+  flex:none;
+  margin-bottom:4px;
+  border-radius:6px;
+  background:#fff;
+  color:#159eea;
+  font-size:7px;
+  font-weight:900;
+}
+
+.cau-main{
+  flex:1;
+  min-height:0;
+  display:flex;
+  gap:4px;
+}
+
+.position-column{
+  width:50px;
+  flex:none;
+  background:#fff;
+  border-radius:7px;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+
+.position-btn{
+  width:100%;
+  height:37px;
+  min-height:37px;
+  padding:2px;
+  background:#fff;
+  color:#555;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:7px;
+  line-height:15px;
+  font-weight:800;
+}
+
+.position-btn[data-pos="dbTruc"],
+.position-btn[data-pos="dbDv"],
+.position-btn[data-pos="dbSum2Last"]{
+  color:#f00;
+}
+
+.position-btn.active{
+  background:#e7f6ff;
+  color:#159eea;
+  border-left:3px solid #159eea;
+}
+
+.cau-right{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.cau-tabs{
+  flex:none;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:3px;
+}
+
+.cau-tab{
+  height:28px;
+  border-radius:6px;
+  background:#fff;
+  color:#666;
+  font-size:7px;
+  font-weight:900;
+}
+
+.cau-tab.active{
+  background:#159eea;
+  color:#fff;
+}
+
+.cau-content{
+  flex:1;
+  min-height:0;
+  margin-top:3px;
+  background:#dff3ff;
+  border-radius:7px;
+  overflow:auto;
+  padding:6px;
+  direction:rtl;
+}
+
+.cau-title{
+  text-align:center;
+  color:#159eea;
+  font-size:7.5px;
+  font-weight:900;
+  margin-bottom:6px;
+  display:none;
+}
+
+/* ================= DỰ ĐOÁN ================= */
+
+.predict-area{
+  width:100%;
+  margin-bottom:5px;
+}
+
+.predict-buttons{
+  display:flex;
+  gap:5px;
+}
+
+.predict-buttons button{
+  width:80px;
+  height:28px;
+  padding:0;
+  border:1px solid #159eea;
+  border-radius:5px;
+  background:#fff;
+  color:#159eea;
+  font-size:9px;
+  font-weight:700;
+}
+
+.predict-buttons button.flash{
+  animation:buttonFlash .12s ease;
+}
+
+@keyframes buttonFlash{
+  0%{
+    background:#eaf7ff;
+    color:#159eea;
+  }
+  100%{
+    background:#fff;
+    color:#159eea;
+  }
+}
+
+.predict-stats{
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  margin-top:4px;
+  min-height:12px;
+  font-size:7px;
+  font-weight:900;
+  color:#555;
+}
+
+.predict-mark{
+  position:absolute;
+  z-index:100;
+  width:24px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  line-height:24px;
+  font-weight:900;
+  pointer-events:none;
+  animation:predictionBlink .55s steps(1,end) infinite;
+}
+
+@keyframes predictionBlink{
+  0%,49%{opacity:1}
+  50%,100%{opacity:0}
+}
+
+.predict-mark.t{color:#e53935}
+.predict-mark.x{color:#168bd0}
+
+/* ================= CARO ================= */
+
+.cau-board{
+  position:relative;
+  width:max-content;
+  min-width:100%;
+  display:flex;
+  align-items:flex-start;
+  gap:3px;
+  border:1px solid rgba(21,158,234,.65);
+  border-radius:4px;
+  background-color:#cfeeff;
+  background-image:
+    linear-gradient(
+      rgba(21,158,234,.22) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(21,158,234,.22) 1px,
+      transparent 1px
+    );
+  background-size:27px 27px;
+  background-position:0 0;
+  padding-right:3px;
+  direction:ltr;
+}
+
+.cau-column{
+  width:24px;
+  min-width:24px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  transform:translateX(1.5px);
+}
+
+.cau-cell{
+  width:24px;
+  height:24px;
+  min-width:24px;
+  min-height:24px;
+  border-radius:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  line-height:24px;
+  font-weight:900;
+  padding:0;
+  margin:0;
+}
+
+.tai,.le,.prime{
+  color:#e53935;
+  background:transparent;
+}
+
+.xiu,.chan,.composite{
+  color:#168bd0;
+  background:transparent;
+}
+
+/* ================= MÀN NHẬP ================= */
+
+#inputScreen{
+  display:none;
+  position:absolute;
+  z-index:50;
+  inset:4px;
+  background:#eef1f5;
+  flex-direction:column;
+}
+
+.input-header{
+  height:34px;
+  flex:none;
+  background:#fff;
+  border-radius:7px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:3px 5px;
+  margin-bottom:4px;
+}
+
+.input-header-title{
+  color:#159eea;
+  font-size:9px;
+  font-weight:900;
+}
+
+.input-close{
+  height:25px;
+  padding:0 9px;
+  border-radius:5px;
+  background:#f0f1f4;
+  color:#555;
+  font-size:7px;
+  font-weight:900;
+}
+
+.input-area{
+  flex:1;
+  min-height:0;
+  background:#fff;
+  border-radius:7px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.input-titles{
+  width:100%;
+  height:27px;
+  flex:none;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  border-bottom:1px solid #eee;
+  box-sizing:border-box;
+}
+
+.input-title{
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:7.5px;
+  font-weight:900;
+  box-sizing:border-box;
+}
+
+.input-title:first-child{
+  color:#159eea;
+}
+
+.input-title:nth-child(2){
+  color:#d00000;
+}
+
+.input-title:last-child{
+  color:#111;
+}
+
+.input-scroll{
+  width:100%;
+  flex:1;
+  min-width:0;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
+}
+
+.input-grid{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:4px;
+  gap:4px;
+  box-sizing:border-box;
+}
+
+.input-row-horizontal{
+  width:100%;
+  min-width:0;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:0;
+  align-items:center;
+  box-sizing:border-box;
+  border:1px solid #cfd5dc;
+  border-radius:6px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.input-row-horizontal .data-row{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  height:37px;
+  margin:0;
+  overflow:hidden;
+  box-sizing:border-box;
+  border-right:1px solid #cfd5dc;
+}
+
+.input-row-horizontal .data-row:last-child{
+  border-right:0;
+}
+
+.date-input{
+  width:100%;
+  height:35px;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  color:#159eea;
+  text-align:center;
+  font-size:20px;
+  font-weight:900;
+  box-sizing:border-box;
+}
+
+.row-input{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  height:35px;
+  min-height:35px;
+  resize:none;
+  overflow:hidden;
+  padding:0 3px;
+  border:0;
+  border-radius:0;
+  outline:none;
+  background:#fff;
+  text-align:center;
+  font-size:20px;
+  line-height:31px;
+  font-weight:900;
+  letter-spacing:1px;
+  caret-color:#159eea;
+  box-sizing:border-box;
+}
+
+.row-input.db-input{
+  color:#d00000;
+  border:0;
+}
+
+.row-input.g1-input{
+  color:#111;
+  border:0;
+}
+
+.row-input.locked{
+  cursor:not-allowed;
+  opacity:1;
+}
+
+.row-input.db-input.locked{
+  background:#ffecec;
+}
+
+.row-input.g1-input.locked{
+  background:#eeeeee;
+}
+
+#dbInputColumn .row-input.locked{
+  background:#ffecec;
+}
+
+#g1InputColumn .row-input.locked{
+  background:#eeeeee;
+}
+
+.add-area{
+  height:38px;
+  flex:none;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  padding:4px;
+}
+
+.add-btn{
+  height:29px;
+  border-radius:5px;
+  background:#159eea;
+  color:#fff;
+  font-size:7px;
+  font-weight:900;
+}
+
+@media(max-width:380px){
+
+  .region-sidebar{
+    width:59px;
+  }
+
+  .position-column{
+    width:58px;
+  }
+
+  .position-btn{
+    font-size:6px;
+  }
+
+  .row-input{
+    font-size:19px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<section id="stationScreen">
+
+  <div class="header">
+
+    <div class="user">
+      Xin chào
+    </div>
+
+    <div class="header-icons">
+      <div class="h-icon">💬</div>
+      <div class="h-icon">♜</div>
+    </div>
+
+  </div>
+
+  <div class="station-title" id="regionTitle">
+    XS MIỀN BẮC VN
+  </div>
+
+  <div class="station-content">
+
+    <aside class="region-sidebar">
+
+      <button type="button" class="region-btn active" data-region="mb">
+        <div class="region-icon">MB</div>
+        <span>XS Miền Bắc VN</span>
+      </button>
+
+      <button type="button" class="region-btn" data-region="mt">
+        <div class="region-icon">MT</div>
+        <span>SX Miền Trung VN</span>
+      </button>
+
+      <button type="button" class="region-btn" data-region="mn">
+        <div class="region-icon">MN</div>
+        <span>SX Miền Nam VN</span>
+      </button>
+
+    </aside>
+
+    <main class="stations">
+      <div class="station-grid" id="stationGrid"></div>
+    </main>
+
+  </div>
+
+</section>
+
+<section id="cauScreen">
+
+  <div class="cau-header">
+
+    <button type="button" class="back" id="backBtn">
+      ‹
+    </button>
+
+    <div class="cau-station">
+      <strong id="stationName"></strong>
+      <span id="stationDay"></span>
+    </div>
+
+  </div>
+
+  <div class="result-top">
+
+    <div class="result-date-row">
+      <span class="result-date" id="resultDate"></span>
+    </div>
+
+    <div class="result-columns">
+
+      <div class="result-box" id="dbResult">
+
+        <div class="result-title">
+          GIẢI ĐẶC BIỆT
+        </div>
+
+        <div class="result-current">
+          <span class="result-number" id="dbNumber">—</span>
+        </div>
+
+        <div class="history" id="dbHistory"></div>
+
+      </div>
+
+      <div class="result-box" id="g1Result">
+
+        <div class="result-title">
+          GIẢI NHẤT
+        </div>
+
+        <div class="result-current">
+          <span class="result-number" id="g1Number">—</span>
+        </div>
+
+        <div class="history" id="g1History"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <button type="button" class="open-input" id="openInput">
+    NHẬP DỮ LIỆU
+  </button>
+
+  <div class="cau-main">
+
+    <div class="position-column">
+
+      <!-- ================= GIẢI ĐẶC BIỆT ================= -->
+
+      <button type="button" class="position-btn db-tram-ngan" data-pos="dbTramNgan">
+        <span>Giải ĐB</span>
+        <span>TRĂM NGÀN</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbVan">
+        <span>Giải ĐB</span>
+        <span>VẠN</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbNgan">
+        <span>Giải ĐB</span>
+        <span>NGÀN</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbTram">
+        <span>Giải ĐB</span>
+        <span>TRĂM</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbTruc">
+        <span>Giải ĐB</span>
+        <span>TRỤC</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbDv">
+        <span>Giải ĐB</span>
+        <span>ĐƠN VỊ</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum2First">
+        <span>TỔNG 2 SỐ</span>
+        <span>ĐẦU ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum3First">
+        <span>TỔNG 3 SỐ</span>
+        <span>ĐẦU ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum4First">
+        <span>TỔNG 4 SỐ</span>
+        <span>ĐẦU ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum5First">
+        <span>TỔNG 5 SỐ</span>
+        <span>ĐẦU ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbSum2Last">
+        <span>TỔNG 2 SỐ</span>
+        <span>CUỐI ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbSum3Last">
+        <span>TỔNG 3 SỐ</span>
+        <span>CUỐI ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="dbSum4Last">
+        <span>TỔNG 4 SỐ</span>
+        <span>CUỐI ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum5Last">
+        <span>TỔNG 5 SỐ</span>
+        <span>CUỐI ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-six-only" data-pos="dbSum6">
+        <span>TỔNG 6 SỐ</span>
+        <span>ĐB</span>
+      </button>
+
+      <button type="button" class="position-btn db-five-only" data-pos="dbSum5">
+        <span>TỔNG 5 SỐ</span>
+        <span>ĐB</span>
+      </button>
+
+      <!-- ================= GIẢI NHẤT ================= -->
+
+      <button type="button" class="position-btn" data-pos="g1Van">
+        <span>Giải Nhất</span>
+        <span>VẠN</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Ngan">
+        <span>Giải Nhất</span>
+        <span>NGÀN</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Tram">
+        <span>Giải Nhất</span>
+        <span>TRĂM</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Truc">
+        <span>Giải Nhất</span>
+        <span>TRỤC</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Dv">
+        <span>Giải Nhất</span>
+        <span>ĐƠN VỊ</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum2First">
+        <span>TỔNG 2 SỐ</span>
+        <span>ĐẦU G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum3First">
+        <span>TỔNG 3 SỐ</span>
+        <span>ĐẦU G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum4First">
+        <span>TỔNG 4 SỐ</span>
+        <span>ĐẦU G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum2Last">
+        <span>TỔNG 2 SỐ</span>
+        <span>CUỐI G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum3Last">
+        <span>TỔNG 3 SỐ</span>
+        <span>CUỐI G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum4Last">
+        <span>TỔNG 4 SỐ</span>
+        <span>CUỐI G1</span>
+      </button>
+
+      <button type="button" class="position-btn" data-pos="g1Sum5">
+        <span>TỔNG 5 SỐ</span>
+        <span>G1</span>
+      </button>
+
+    </div>
+
+    <main class="cau-right">
+
+      <div class="cau-tabs">
+
+        <button type="button" class="cau-tab active" data-type="tx">
+          TÀI XỈU
+        </button>
+
+        <button type="button" class="cau-tab" data-type="cl">
+          CHẴN LẺ
+        </button>
+
+        <button type="button" class="cau-tab" data-type="ps">
+          SNT/SH
+        </button>
+
+      </div>
+
+      <div class="cau-content">
+
+        <div class="cau-title" id="cauTitle">
+          CẦU TÀI / XỈU
+        </div>
+
+        <div class="predict-area">
+
+          <div class="predict-buttons">
+
+            <button type="button" id="predictX">
+              KỲ SAU S
+            </button>
+
+            <button type="button" id="predictT">
+              KỲ SAU B
+            </button>
+
+          </div>
+
+          <div class="predict-stats" id="predictStats"></div>
+
+        </div>
+
+        <div id="cauArea">
+
+          <div class="no-data">
+            Chưa có dữ liệu
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+</section>
+
+<section id="inputScreen">
+
+  <div class="input-header">
+
+    <div class="input-header-title">
+      NHẬP DỮ LIỆU
+    </div>
+
+    <button type="button" class="input-close" id="closeInput">
+      ĐÓNG
+    </button>
+
+  </div>
+
+  <div class="input-area">
+
+    <div class="input-titles">
+
+      <div class="input-title">NGÀY</div>
+      <div class="input-title">GIẢI ĐẶC BIỆT</div>
+      <div class="input-title">GIẢI NHẤT</div>
+
+    </div>
+
+    <div class="input-scroll">
+
+      <div class="input-grid" id="inputGrid"></div>
+
+    </div>
+
+    <div class="add-area">
+
+      <button type="button" class="add-btn" id="addTop">
+        ＋ THÊM Ô TRÊN
+      </button>
+
+      <button type="button" class="add-btn" id="addBottom">
+        ＋ THÊM Ô DƯỚI
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+</div>
+
+<script>
+
+/* =====================================================
+   DỮ LIỆU ĐÀI
+===================================================== */
+
+const STATIONS={
+
+  mb:{
+    title:"XS MIỀN BẮC VN",
+
+    days:{
+      T2:[["Hà Nội","Giải thưởng thứ 2"]],
+      T3:[["Quảng Ninh","Giải thưởng thứ 3"]],
+      T4:[["Bắc Ninh","Giải thưởng thứ 4"]],
+      T5:[["Hà Nội","Giải thưởng thứ 5"]],
+      T6:[["Hải Phòng","Giải thưởng thứ 6"]],
+      T7:[["Nam Định","Giải thưởng thứ 7"]],
+      CN:[["Thái Bình","Giải thưởng chủ nhật"]]
+    }
+
+  },
+
+  mt:{
+    title:"SX MIỀN TRUNG VN",
+
+    days:{
+      T2:[
+        ["Phú Yên","Giải thưởng thứ 2"],
+        ["Thừa Thiên Huế","Giải thưởng thứ 2"]
+      ],
+
+      T3:[
+        ["Đắk Lắk","Giải thưởng thứ 3"],
+        ["Quảng Nam","Giải thưởng thứ 3"]
+      ],
+
+      T4:[
+        ["Đà Nẵng","Giải thưởng thứ 4"],
+        ["Khánh Hòa","Giải thưởng thứ 4"]
+      ],
+
+      T5:[
+        ["Bình Định","Giải thưởng thứ 5"],
+        ["Quảng Bình","Giải thưởng thứ 5"],
+        ["Quảng Trị","Giải thưởng thứ 5"]
+      ],
+
+      T6:[
+        ["Gia Lai","Giải thưởng thứ 6"],
+        ["Ninh Thuận","Giải thưởng thứ 6"]
+      ],
+
+      T7:[
+        ["Đà Nẵng","Giải thưởng thứ 7"],
+        ["Quảng Ngãi","Giải thưởng thứ 7"],
+        ["Đắk Nông","Giải thưởng thứ 7"]
+      ],
+
+      CN:[
+        ["Kon Tum","Giải thưởng chủ nhật"],
+        ["Khánh Hòa","Giải thưởng chủ nhật"],
+        ["Thừa Thiên Huế","Giải thưởng chủ nhật"]
+      ]
+    }
+
+  },
+
+  mn:{
+    title:"SX MIỀN NAM VN",
+
+    days:{
+      T2:[
+        ["TP. Hồ Chí Minh","Giải thưởng thứ 2"],
+        ["Đồng Tháp","Giải thưởng thứ 2"],
+        ["Cà Mau","Giải thưởng thứ 2"]
+      ],
+
+      T3:[
+        ["Bến Tre","Giải thưởng thứ 3"],
+        ["Vũng Tàu","Giải thưởng thứ 3"],
+        ["Bạc Liêu","Giải thưởng thứ 3"]
+      ],
+
+      T4:[
+        ["Đồng Nai","Giải thưởng thứ 4"],
+        ["Cần Thơ","Giải thưởng thứ 4"],
+        ["Sóc Trăng","Giải thưởng thứ 4"]
+      ],
+
+      T5:[
+        ["Tây Ninh","Giải thưởng thứ 5"],
+        ["An Giang","Giải thưởng thứ 5"],
+        ["Bình Thuận","Giải thưởng thứ 5"]
+      ],
+
+      T6:[
+        ["Vĩnh Long","Giải thưởng thứ 6"],
+        ["Bình Dương","Giải thưởng thứ 6"],
+        ["Trà Vinh","Giải thưởng thứ 6"]
+      ],
+
+      T7:[
+        ["TP. Hồ Chí Minh","Giải thưởng thứ 7"],
+        ["Long An","Giải thưởng thứ 7"],
+        ["Bình Phước","Giải thưởng thứ 7"],
+        ["Hậu Giang","Giải thưởng thứ 7"]
+      ],
+
+      CN:[
+        ["Tiền Giang","Giải thưởng chủ nhật"],
+        ["Kiên Giang","Giải thưởng chủ nhật"],
+        ["Đà Lạt","Giải thưởng chủ nhật"]
+      ]
+    }
+
+  }
+
+};
+
+/* =====================================================
+   BIẾN
+===================================================== */
+
+const STORE_KEY="XS_CAU_FULL77999";
+
+const AUTO_KQ_API=
+  "https://thanhdoan235.thanhdoanxuan79.workers.dev";
+
+let currentRegion="mb";
+let currentDay="";
+let currentStation="";
+let currentPosition="dbVan";
+let currentType="tx";
+
+let autoSyncTimer=null;
+let autoSyncBusy=false;
+
+/* =====================================================
+   SỐ CHỮ SỐ
+===================================================== */
+
+function digitLength(type){
+
+  if(
+    type==="db" &&
+    (
+      currentRegion==="mt" ||
+      currentRegion==="mn"
+    )
+  ){
+    return 6;
+  }
+
+  return 5;
+
+}
+
+/* =====================================================
+   CHUẨN HÓA TÊN
+===================================================== */
+
+function normalize(text){
+
+  return String(text||"")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/đ/g,"d")
+    .replace(/Đ/g,"D")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g,"");
+
+}
+
+/* =====================================================
+   CẬP NHẬT NÚT TRĂM NGÀN
+===================================================== */
+
+function updateRegionPositionButtons(){
+
+  const sixButtons=
+    document.querySelectorAll(
+      ".db-six-only"
+    );
+
+  const fiveButtons=
+    document.querySelectorAll(
+      ".db-five-only"
+    );
+
+  const tramNgan=
+    document.querySelector(
+      '[data-pos="dbTramNgan"]'
+    );
+
+  const isSix=
+    currentRegion==="mt" ||
+    currentRegion==="mn";
+
+  if(tramNgan){
+
+    tramNgan.style.display=
+      isSix
+        ?"flex"
+        :"none";
+
+  }
+
+  sixButtons.forEach(btn=>{
+
+    btn.style.display=
+      isSix
+        ?"flex"
+        :"none";
+
+  });
+
+  fiveButtons.forEach(btn=>{
+
+    btn.style.display=
+      isSix
+        ?"none"
+        :"flex";
+
+  });
+
+}
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const stationScreen=
+  document.getElementById("stationScreen");
+
+const cauScreen=
+  document.getElementById("cauScreen");
+
+const inputScreen=
+  document.getElementById("inputScreen");
+
+const stationGrid=
+  document.getElementById("stationGrid");
+
+const regionTitle=
+  document.getElementById("regionTitle");
+
+const stationName=
+  document.getElementById("stationName");
+
+const stationDay=
+  document.getElementById("stationDay");
+
+const dbNumber=
+  document.getElementById("dbNumber");
+
+const g1Number=
+  document.getElementById("g1Number");
+
+const resultDate=
+  document.getElementById("resultDate");
+
+const dbHistory=
+  document.getElementById("dbHistory");
+
+const g1History=
+  document.getElementById("g1History");
+
+const cauArea=
+  document.getElementById("cauArea");
+
+const cauTitle=
+  document.getElementById("cauTitle");
+
+const predictX=
+  document.getElementById("predictX");
+
+const predictT=
+  document.getElementById("predictT");
+
+const predictStats=
+  document.getElementById("predictStats");
+
+let prediction="";
+
+/* =====================================================
+   STORAGE
+===================================================== */
+
+function loadAll(){
+
+  try{
+
+    const raw=
+      localStorage.getItem(STORE_KEY);
+
+    if(!raw){
+      return {};
+    }
+
+    const data=
+      JSON.parse(raw);
+
+    if(
+      !data ||
+      typeof data!=="object"
+    ){
+      return {};
+    }
+
+    return data;
+
+  }catch(e){
+
+    return {};
+
+  }
+
+}
+
+function saveAll(data){
+
+  localStorage.setItem(
+    STORE_KEY,
+    JSON.stringify(data)
+  );
+
+}
+
+function getKey(){
+
+  return [
+    currentRegion,
+    currentDay,
+    currentStation
+  ].join("|");
+
+}
+
+function getDateDayCode(isoDate){
+
+  const d=
+    new Date(
+      isoDate+"T00:00:00Z"
+    );
+
+  const day=
+    d.getUTCDay();
+
+  const map={
+    0:"CN",
+    1:"T2",
+    2:"T3",
+    3:"T4",
+    4:"T5",
+    5:"T6",
+    6:"T7"
+  };
+
+  return map[day]||"";
+
+}
+
+/* =====================================================
+   SO SÁNH TÊN ĐÀI ONLINE
+===================================================== */
+
+function stationOnlineMatch(localName,onlineName){
+
+  const a=
+    String(localName||"")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/đ/g,"d")
+      .toLowerCase()
+      .replace(/\./g,"")
+      .replace(/\s+/g," ")
+      .trim();
+
+  const b=
+    String(onlineName||"")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/đ/g,"d")
+      .toLowerCase()
+      .replace(/\./g,"")
+      .replace(/\s+/g," ")
+      .trim();
+
+  if(a===b){
+    return true;
+  }
+
+  const aliases={
+    "tp ho chi minh":"ho chi minh",
+    "ho chi minh":"tp ho chi minh",
+    "thua thien hue":"hue",
+    "hue":"thua thien hue"
+  };
+
+  return (
+    aliases[a]===b ||
+    aliases[b]===a
+  );
+
+}
+
+/* =====================================================
+   THÊM KẾT QUẢ ONLINE
+===================================================== */
+
+function addOnlineResult(data,item){
+
+  if(!item || !item.isoDate){
+    return false;
+  }
+
+  const db=
+    String(item.db||"").replace(/\D/g,"");
+
+  const g1=
+    String(item.g1||"").replace(/\D/g,"");
+
+  const dbLength=
+    digitLength("db");
+
+  if(
+    !new RegExp(
+      "^\\d{"+dbLength+"}$"
+    ).test(db) ||
+    !/^\d{5}$/.test(g1)
+  ){
+    return false;
+  }
+
+  const date=
+    String(item.isoDate);
+
+  const dayCode=
+    getDateDayCode(date);
+
+  if(dayCode!==currentDay){
+    return false;
+  }
+
+  if(
+    !stationOnlineMatch(
+      currentStation,
+      item.province
+    )
+  ){
+    return false;
+  }
+
+  const dbExists=
+    data.db.some(
+      x=>
+        x &&
+        x.sourceDate===date
+    );
+
+  const g1Exists=
+    data.g1.some(
+      x=>
+        x &&
+        x.sourceDate===date
+    );
+
+  const created=
+    new Date(
+      date+"T00:00:00+07:00"
+    ).getTime();
+
+  const rowId=
+    "online_"+date;
+
+  let changed=false;
+
+  if(!dbExists){
+
+    data.db.push({
+
+      id:rowId+"_db",
+      rowId:rowId,
+      number:db,
+      locked:true,
+      created:created,
+      sourceDate:date,
+      sourceDateText:item.date||"",
+      online:true,
+      region:item.region||currentRegion,
+      province:item.province||currentStation
+
+    });
+
+    changed=true;
+
+  }
+
+  if(!g1Exists){
+
+    data.g1.push({
+
+      id:rowId+"_g1",
+      rowId:rowId,
+      number:g1,
+      locked:true,
+      created:created,
+      sourceDate:date,
+      sourceDateText:item.date||"",
+      online:true,
+      region:item.region||currentRegion,
+      province:item.province||currentStation
+
+    });
+
+    changed=true;
+
+  }
+
+  return changed;
+
+}
+
+/* =====================================================
+   TỰ ĐỘNG LẤY KQ ONLINE
+===================================================== */
+
+async function syncOnlineResults(){
+
+  if(
+    autoSyncBusy ||
+    !AUTO_KQ_API
+  ){
+    return;
+  }
+
+  autoSyncBusy=true;
+
+  try{
+
+    const response=
+      await fetch(
+        AUTO_KQ_API+
+        "/latest?t="+
+        Date.now(),
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
+
+    if(!response.ok){
+      throw new Error(
+        "HTTP "+response.status
+      );
+    }
+
+    const result=
+      await response.json();
+
+    console.log(
+      "KQ KV:",
+      result
+    );
+
+    if(
+      !result ||
+      result.ok!==true ||
+      !Array.isArray(result.results)
+    ){
+      throw new Error(
+        "Dữ liệu /latest không hợp lệ"
+      );
+    }
+
+    const all=
+      loadAll();
+
+    const key=
+      getKey();
+
+    if(!all[key]){
+
+      all[key]={
+        db:[],
+        g1:[]
+      };
+
+    }
+
+    const data=
+      all[key];
+
+    if(!Array.isArray(data.db)){
+      data.db=[];
+    }
+
+    if(!Array.isArray(data.g1)){
+      data.g1=[];
+    }
+
+    let added=0;
+
+    result.results.forEach(item=>{
+
+      if(!item){
+        return;
+      }
+
+      if(
+        String(item.region||"")
+          .toLowerCase()
+        !==
+        String(currentRegion)
+          .toLowerCase()
+      ){
+        return;
+      }
+
+      if(
+        !stationOnlineMatch(
+          currentStation,
+          item.province
+        )
+      ){
+        return;
+      }
+
+      if(
+        getDateDayCode(
+          String(item.isoDate||"")
+        )!==currentDay
+      ){
+        return;
+      }
+
+      if(
+        addOnlineResult(
+          data,
+          item
+        )
+      ){
+
+        added++;
+
+      }
+
+    });
+
+    data.db.sort(
+      (a,b)=>
+        Number(b.created||0)-
+        Number(a.created||0)
+    );
+
+    data.g1.sort(
+      (a,b)=>
+        Number(b.created||0)-
+        Number(a.created||0)
+    );
+
+    saveAll(all);
+
+    loadLatest();
+
+    if(
+      inputScreen.style.display===
+      "flex"
+    ){
+
+      renderInputLists();
+
+    }
+
+    console.log(
+      "Đồng bộ KV xong:",
+      currentRegion,
+      currentStation,
+      "thêm:",
+      added,
+      "tổng:",
+      result.count
+    );
+
+  }catch(error){
+
+    console.log(
+      "Đồng bộ KV lỗi:",
+      error
+    );
+
+  }finally{
+
+    autoSyncBusy=false;
+
+  }
+
+}
+/* =====================================================
+   TÍNH NGÀY ISO
+===================================================== */
+
+function getIsoDateForCurrentDay(){
+
+  if(currentDay){
+
+    const now=
+      new Date();
+
+    const current=
+      getDateDayCode(
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:"Asia/Ho_Chi_Minh",
+            year:"numeric",
+            month:"2-digit",
+            day:"2-digit"
+          }
+        ).format(now)
+      );
+
+    if(current===currentDay){
+
+      return new Intl.DateTimeFormat(
+        "en-CA",
+        {
+          timeZone:"Asia/Ho_Chi_Minh",
+          year:"numeric",
+          month:"2-digit",
+          day:"2-digit"
+        }
+      ).format(now);
+
+    }
+
+    const target=
+      {
+        T2:1,
+        T3:2,
+        T4:3,
+        T5:4,
+        T6:5,
+        T7:6,
+        CN:0
+      }[currentDay];
+
+    const d=
+      new Date(now);
+
+    const diff=
+      (target-d.getDay()+7)%7;
+
+    d.setDate(
+      d.getDate()-diff
+    );
+
+    return new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:"Asia/Ho_Chi_Minh",
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+      }
+    ).format(d);
+
+  }
+
+  const now=
+    new Date();
+
+  const parts=
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:"Asia/Ho_Chi_Minh",
+        year:"numeric",
+        month:"2-digit",
+        day:"2-digit"
+      }
+    ).formatToParts(now);
+
+  const obj={};
+
+  parts.forEach(p=>{
+
+    if(p.type!=="literal"){
+      obj[p.type]=p.value;
+    }
+
+  });
+
+  return (
+    obj.year+
+    "-"+
+    obj.month+
+    "-"+
+    obj.day
+  );
+
+}
+
+function startAutoSync(){
+
+  if(autoSyncTimer){
+
+    clearInterval(
+      autoSyncTimer
+    );
+
+  }
+
+  syncOnlineResults();
+
+  autoSyncTimer=
+    setInterval(
+      ()=>{
+        syncOnlineResults();
+      },
+      60000
+    );
+
+}
+
+/* =====================================================
+   ĐẢM BẢO DỮ LIỆU
+===================================================== */
+
+function ensureCurrent(){
+
+  const all=
+    loadAll();
+
+  const key=
+    getKey();
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+    saveAll(all);
+
+  }
+
+  const current=
+    all[key];
+
+  if(!Array.isArray(current.db)){
+    current.db=[];
+  }
+
+  if(!Array.isArray(current.g1)){
+    current.g1=[];
+  }
+
+  let changed=false;
+
+  function normalizeArray(arr,type){
+
+    const len=
+      digitLength(type);
+
+    const re=
+      new RegExp(
+        "^\\d{"+len+"}$"
+      );
+
+    arr.forEach(
+      (item,i)=>{
+
+        if(
+          !item ||
+          typeof item!=="object"
+        ){
+          return;
+        }
+
+        if(!item.id){
+
+          item.id=
+            "old_"+
+            Date.now()+
+            "_"+
+            Math.random()
+              .toString(36)
+              .slice(2)+
+            "_"+
+            i;
+
+          changed=true;
+
+        }
+
+        if(!item.rowId){
+
+          item.rowId=
+            "legacy_"+i;
+
+          changed=true;
+
+        }
+
+        if(
+          typeof item.created!=="number"
+        ){
+
+          item.created=
+            i+1;
+
+          changed=true;
+
+        }
+
+        if(
+          typeof item.locked!=="boolean"
+        ){
+
+          item.locked=
+            re.test(
+              String(item.number||"")
+            );
+
+          changed=true;
+
+        }
+
+      }
+    );
+
+  }
+
+  normalizeArray(
+    current.db,
+    "db"
+  );
+
+  normalizeArray(
+    current.g1,
+    "g1"
+  );
+
+  if(changed){
+    saveAll(all);
+  }
+
+  return current;
+
+}
+
+/* =====================================================
+   THỨ
+===================================================== */
+
+function dayText(day){
+
+  const map={
+
+    T2:"Thứ 2",
+    T3:"Thứ 3",
+    T4:"Thứ 4",
+    T5:"Thứ 5",
+    T6:"Thứ 6",
+    T7:"Thứ 7",
+    CN:"Chủ nhật"
+
+  };
+
+  return map[day]||day;
+
+}
+
+/* =====================================================
+   ĐỔI MIỀN
+===================================================== */
+
+document
+  .querySelectorAll(".region-btn")
+  .forEach(btn=>{
+
+    btn.addEventListener(
+      "click",
+      ()=>{
+
+        document
+          .querySelectorAll(".region-btn")
+          .forEach(x=>{
+            x.classList.remove("active");
+          });
+
+        btn.classList.add("active");
+
+        if(autoSyncTimer){
+
+          clearInterval(
+            autoSyncTimer
+          );
+
+          autoSyncTimer=null;
+
+        }
+
+        currentRegion=
+          btn.dataset.region;
+
+        currentPosition="dbVan";
+
+        renderStations();
+
+      }
+    );
+
+  });
+
+/* =====================================================
+   HIỂN THỊ ĐÀI
+===================================================== */
+
+function renderStations(){
+
+  const info=
+    STATIONS[currentRegion];
+
+  regionTitle.textContent=
+    info.title;
+
+  stationGrid.innerHTML="";
+
+  updateRegionPositionButtons();
+
+  let number=1;
+
+  Object.keys(info.days)
+    .forEach(day=>{
+
+      const list=
+        info.days[day]||[];
+
+      list.forEach(item=>{
+
+        const btn=
+          document.createElement("button");
+
+        btn.type="button";
+        btn.className="station-card";
+
+        btn.innerHTML=`
+
+          <div class="station-number">
+            ${number}
+          </div>
+
+          <div class="station-name">
+            ${item[0]}
+          </div>
+
+          <div class="station-day">
+            ${item[1]}
+          </div>
+
+          <div class="station-circle">
+            ${day}
+          </div>
+
+        `;
+
+        btn.addEventListener(
+          "click",
+          ()=>{
+
+            openStation(
+              day,
+              item[0]
+            );
+
+          }
+        );
+
+        stationGrid.appendChild(btn);
+
+        number++;
+
+      });
+
+    });
+
+}
+
+/* =====================================================
+   MỞ ĐÀI
+===================================================== */
+
+function openStation(day,station){
+
+  currentDay=day;
+  currentStation=station;
+
+  currentPosition="dbVan";
+  currentType="tx";
+  prediction="";
+
+  stationName.textContent=
+    station;
+
+  stationDay.textContent=
+    dayText(day);
+
+  stationScreen.style.display=
+    "none";
+
+  cauScreen.style.display=
+    "flex";
+
+  inputScreen.style.display=
+    "none";
+
+  updateRegionPositionButtons();
+
+  document
+    .querySelectorAll(".position-btn")
+    .forEach(x=>{
+      x.classList.remove("active");
+    });
+
+  const defaultPosition=
+    document.querySelector(
+      '[data-pos="dbVan"]'
+    );
+
+  if(defaultPosition){
+    defaultPosition.classList.add("active");
+  }
+
+  document
+    .querySelectorAll(".cau-tab")
+    .forEach(x=>{
+      x.classList.remove("active");
+    });
+
+  document
+    .querySelector(
+      '[data-type="tx"]'
+    )
+    .classList.add("active");
+
+  loadLatest();
+
+  startAutoSync();
+
+}
+
+/* =====================================================
+   QUAY LẠI
+===================================================== */
+
+document
+  .getElementById("backBtn")
+  .addEventListener(
+    "click",
+    ()=>{
+
+      if(autoSyncTimer){
+
+        clearInterval(
+          autoSyncTimer
+        );
+
+        autoSyncTimer=null;
+
+      }
+
+      cauScreen.style.display=
+        "none";
+
+      inputScreen.style.display=
+        "none";
+
+      stationScreen.style.display=
+        "flex";
+
+    }
+  );
+
+/* =====================================================
+   MỚI NHẤT -> CŨ NHẤT
+===================================================== */
+
+function newest(list,type){
+
+  const len=
+    digitLength(type);
+
+  const re=
+    new RegExp(
+      "^\\d{"+len+"}$"
+    );
+
+  return (list||[])
+    .filter(
+      x=>
+        x &&
+        re.test(
+          String(x.number||"")
+        )
+    )
+    .slice()
+    .sort(
+      (a,b)=>{
+
+        return (
+          (Number(b.created)||0)-
+          (Number(a.created)||0)
+        );
+
+      }
+    );
+
+}
+
+/* =====================================================
+   KẾT QUẢ
+===================================================== */
+
+function loadLatest(){
+
+  const data=
+    ensureCurrent();
+
+  const db=
+    newest(
+      data.db,
+      "db"
+    );
+
+  const g1=
+    newest(
+      data.g1,
+      "g1"
+    );
+
+  dbNumber.textContent=
+    db.length
+      ?db[0].number
+      :"—";
+
+  g1Number.textContent=
+    g1.length
+      ?g1[0].number
+      :"—";
+
+  const latestDate=
+    db.length
+      ?(
+        db[0].sourceDateText||""
+      )
+      :g1.length
+        ?(
+          g1[0].sourceDateText||""
+        )
+        :"";
+
+  resultDate.textContent=
+    latestDate;
+
+  renderHistory(
+    dbHistory,
+    db
+  );
+
+  renderHistory(
+    g1History,
+    g1
+  );
+
+  drawCau();
+
+}
+
+/* =====================================================
+   LỊCH SỬ
+===================================================== */
+
+function renderHistory(box,list){
+
+  box.innerHTML="";
+
+  list.forEach(item=>{
+
+    const row=
+      document.createElement("div");
+
+    row.className="history-row";
+
+    const date=
+      item.sourceDateText||
+      "";
+
+    row.innerHTML=`
+
+      <span class="history-date">
+        ${date}
+      </span>
+
+      <span class="history-number">
+        ${item.number}
+      </span>
+
+    `;
+
+    box.appendChild(row);
+
+  });
+
+}
+
+/* =====================================================
+   MỞ LỊCH SỬ
+===================================================== */
+
+document
+  .getElementById("dbResult")
+  .addEventListener(
+    "click",
+    function(){
+
+      this.classList.toggle("open");
+
+    }
+  );
+
+document
+  .getElementById("g1Result")
+  .addEventListener(
+    "click",
+    function(){
+
+      this.classList.toggle("open");
+
+    }
+  );
+
+/* =====================================================
+   VỊ TRÍ CẦU
+===================================================== */
+
+document
+  .querySelectorAll(".position-btn")
+  .forEach(btn=>{
+
+    btn.addEventListener(
+      "click",
+      ()=>{
+
+        if(
+          btn.style.display==="none"
+        ){
+          return;
+        }
+
+        document
+          .querySelectorAll(".position-btn")
+          .forEach(x=>{
+            x.classList.remove("active");
+          });
+
+        btn.classList.add("active");
+
+        currentPosition=
+          btn.dataset.pos;
+
+        prediction="";
+
+        drawCau();
+
+      }
+    );
+
+  });
+
+/* =====================================================
+   LOẠI CẦU
+===================================================== */
+
+document
+  .querySelectorAll(".cau-tab")
+  .forEach(btn=>{
+
+    btn.addEventListener(
+      "click",
+      ()=>{
+
+        document
+          .querySelectorAll(".cau-tab")
+          .forEach(x=>{
+            x.classList.remove("active");
+          });
+
+        btn.classList.add("active");
+
+        currentType=
+          btn.dataset.type;
+
+        prediction="";
+
+        drawCau();
+
+      }
+    );
+
+  });
+
+/* =====================================================
+   LẤY CHỮ SỐ / TỔNG
+===================================================== */
+
+function getDigits(){
+
+  const data=
+    ensureCurrent();
+
+  const sumPositions=[
+
+    "dbSum2First",
+    "dbSum3First",
+    "dbSum4First",
+    "dbSum5First",
+    "dbSum2Last",
+    "dbSum3Last",
+    "dbSum4Last",
+    "dbSum5Last",
+    "dbSum6",
+
+    "dbSum5",
+
+    "g1Sum2First",
+    "g1Sum3First",
+    "g1Sum4First",
+    "g1Sum2Last",
+    "g1Sum3Last",
+    "g1Sum4Last",
+    "g1Sum5"
+
+  ];
+
+  if(
+    sumPositions.includes(
+      currentPosition
+    )
+  ){
+
+    const isDB=
+      currentPosition.startsWith("db");
+
+    const list=
+      isDB
+        ?newest(
+          data.db,
+          "db"
+        )
+        :newest(
+          data.g1,
+          "g1"
+        );
+
+    const isSixDB=
+      isDB &&
+      digitLength("db")===6;
+
+    function calcSum(number){
+
+      const s=
+        String(number||"");
+
+      const len=
+        isDB
+          ?digitLength("db")
+          :5;
+
+      if(
+        !new RegExp(
+          "^\\d{"+len+"}$"
+        ).test(s)
+      ){
+        return null;
+      }
+
+      let total=0;
+
+      let offset=
+        isSixDB
+          ?1
+          :0;
+
+      if(
+        currentPosition==="dbSum2First" ||
+        currentPosition==="g1Sum2First"
+      ){
+
+        total=
+          Number(s[offset])+
+          Number(s[offset+1]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum3First" ||
+        currentPosition==="g1Sum3First"
+      ){
+
+        total=
+          Number(s[offset])+
+          Number(s[offset+1])+
+          Number(s[offset+2]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum4First" ||
+        currentPosition==="g1Sum4First"
+      ){
+
+        total=
+          Number(s[offset])+
+          Number(s[offset+1])+
+          Number(s[offset+2])+
+          Number(s[offset+3]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum5First"
+      ){
+
+        total=
+          Number(s[1])+
+          Number(s[2])+
+          Number(s[3])+
+          Number(s[4])+
+          Number(s[5]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum2Last" ||
+        currentPosition==="g1Sum2Last"
+      ){
+
+        total=
+          Number(s[len-2])+
+          Number(s[len-1]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum3Last" ||
+        currentPosition==="g1Sum3Last"
+      ){
+
+        total=
+          Number(s[len-3])+
+          Number(s[len-2])+
+          Number(s[len-1]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum4Last" ||
+        currentPosition==="g1Sum4Last"
+      ){
+
+        total=
+          Number(s[len-4])+
+          Number(s[len-3])+
+          Number(s[len-2])+
+          Number(s[len-1]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum5Last"
+      ){
+
+        total=
+          Number(s[1])+
+          Number(s[2])+
+          Number(s[3])+
+          Number(s[4])+
+          Number(s[5]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum6"
+      ){
+
+        total=
+          Number(s[0])+
+          Number(s[1])+
+          Number(s[2])+
+          Number(s[3])+
+          Number(s[4])+
+          Number(s[5]);
+
+      }
+
+      else if(
+        currentPosition==="dbSum5"
+      ){
+
+        total=
+          Number(s[0])+
+          Number(s[1])+
+          Number(s[2])+
+          Number(s[3])+
+          Number(s[4]);
+
+      }
+
+      else if(
+        currentPosition==="g1Sum5"
+      ){
+
+        total=
+          Number(s[0])+
+          Number(s[1])+
+          Number(s[2])+
+          Number(s[3])+
+          Number(s[4]);
+
+      }
+
+      return String(
+        total%10
+      );
+
+    }
+
+    return list
+      .map(
+        x=>
+          calcSum(x.number)
+      )
+      .filter(
+        x=>x!==null
+      );
+
+  }
+
+  const map={
+
+    dbTramNgan:0,
+    dbVan:1,
+    dbNgan:2,
+    dbTram:3,
+    dbTruc:4,
+    dbDv:5,
+
+    g1Van:0,
+    g1Ngan:1,
+    g1Tram:2,
+    g1Truc:3,
+    g1Dv:4
+
+  };
+
+  /*
+   * MB dùng mapping 5 số:
+   * Vạn 0 / Ngàn 1 / Trăm 2 / Trục 3 / ĐV 4
+   */
+  if(
+    currentRegion==="mb" &&
+    currentPosition.startsWith("db")
+  ){
+
+    const mbMap={
+      dbVan:0,
+      dbNgan:1,
+      dbTram:2,
+      dbTruc:3,
+      dbDv:4
+    };
+
+    const mbIndex=
+      mbMap[currentPosition];
+
+    if(mbIndex===undefined){
+      return [];
+    }
+
+    return newest(
+      data.db,
+      "db"
+    )
+      .map(
+        x=>
+          x.number[mbIndex]
+      )
+      .filter(
+        x=>
+          x!==undefined
+      );
+
+  }
+
+  const index=
+    map[currentPosition];
+
+  if(index===undefined){
+    return [];
+  }
+
+  const isDB=
+    currentPosition.startsWith("db");
+
+  const list=
+    isDB
+      ?newest(
+        data.db,
+        "db"
+      )
+      :newest(
+        data.g1,
+        "g1"
+      );
+
+  return list
+    .map(
+      x=>
+        x.number[index]
+    )
+    .filter(
+      x=>
+        x!==undefined
+    );
+
+}
+
+/* =====================================================
+   PHÂN LOẠI
+===================================================== */
+
+function classifyDigit(digit){
+
+  const n=
+    String(digit);
+
+  if(currentType==="tx"){
+
+    return [
+      "5","6","7","8","9"
+    ].includes(n)
+      ?"T"
+      :"X";
+
+  }
+
+  if(currentType==="cl"){
+
+    return [
+      "0","2","4","6","8"
+    ].includes(n)
+      ?"E"
+      :"O";
+
+  }
+
+  if(currentType==="ps"){
+
+    return [
+      "1","2","3","5","7"
+    ].includes(n)
+      ?"P"
+      :"C";
+
+  }
+
+  return "";
+
+}
+
+/* =====================================================
+   DỰNG CẦU
+===================================================== */
+
+function buildBridge(values){
+
+  const ROWS=6;
+  const board=[];
+
+  if(
+    !Array.isArray(values) ||
+    !values.length
+  ){
+    return board;
+  }
+
+  function occupied(r,c){
+
+    return !!(
+      board[r] &&
+      board[r][c]!==undefined
+    );
+
+  }
+
+  function put(r,c,v){
+
+    if(!board[r]){
+      board[r]=[];
+    }
+
+    board[r][c]=v;
+
+  }
+
+  const runs=[];
+
+  let value=
+    values[0];
+
+  let count=1;
+
+  for(
+    let i=1;
+    i<values.length;
+    i++
+  ){
+
+    if(values[i]===value){
+
+      count++;
+
+    }else{
+
+      runs.push({
+        value:value,
+        count:count
+      });
+
+      value=
+        values[i];
+
+      count=1;
+
+    }
+
+  }
+
+  runs.push({
+    value:value,
+    count:count
+  });
+
+  let startCol=0;
+
+  runs.forEach(run=>{
+
+    let r=0;
+    let c=startCol;
+    let remain=run.count;
+    let horizontal=false;
+
+    while(remain>0){
+
+      while(occupied(r,c)){
+        c++;
+      }
+
+      put(
+        r,
+        c,
+        run.value
+      );
+
+      remain--;
+
+      if(remain<=0){
+        break;
+      }
+
+      if(horizontal){
+
+        c++;
+
+        while(occupied(r,c)){
+          c++;
+        }
+
+        continue;
+
+      }
+
+      if(
+        r+1<ROWS &&
+        !occupied(r+1,c)
+      ){
+
+        r++;
+
+      }else{
+
+        horizontal=true;
+
+        c++;
+
+        while(occupied(r,c)){
+          c++;
+        }
+
+      }
+
+    }
+
+    startCol++;
+
+  });
+
+  return board;
+
+}
+
+/* =====================================================
+   TÌM TỌA ĐỘ TAY TIẾP THEO
+===================================================== */
+
+function getPredictionPosition(
+  values,
+  predictedValue
+){
+
+  if(
+    !Array.isArray(values) ||
+    !values.length ||
+    !predictedValue
+  ){
+    return null;
+  }
+
+  const ROWS=6;
+
+  const testValues=
+    values.concat(
+      predictedValue
+    );
+
+  const board=[];
+
+  function occupied(r,c){
+
+    return !!(
+      board[r] &&
+      board[r][c]!==undefined
+    );
+
+  }
+
+  function put(r,c,v){
+
+    if(!board[r]){
+      board[r]=[];
+    }
+
+    board[r][c]=v;
+
+  }
+
+  const runs=[];
+
+  let value=
+    testValues[0];
+
+  let count=1;
+
+  for(
+    let i=1;
+    i<testValues.length;
+    i++
+  ){
+
+    if(testValues[i]===value){
+
+      count++;
+
+    }else{
+
+      runs.push({
+        value:value,
+        count:count
+      });
+
+      value=
+        testValues[i];
+
+      count=1;
+
+    }
+
+  }
+
+  runs.push({
+    value:value,
+    count:count
+  });
+
+  let startCol=0;
+  let lastPosition=null;
+
+  for(const run of runs){
+
+    let r=0;
+    let c=startCol;
+    let remain=run.count;
+    let horizontal=false;
+
+    while(remain>0){
+
+      while(occupied(r,c)){
+        c++;
+      }
+
+      put(
+        r,
+        c,
+        run.value
+      );
+
+      lastPosition={
+        row:r,
+        col:c
+      };
+
+      remain--;
+
+      if(remain<=0){
+        break;
+      }
+
+      if(horizontal){
+
+        c++;
+
+        while(occupied(r,c)){
+          c++;
+        }
+
+        continue;
+
+      }
+
+      if(
+        r+1<ROWS &&
+        !occupied(r+1,c)
+      ){
+
+        r++;
+
+      }else{
+
+        horizontal=true;
+
+        c++;
+
+        while(occupied(r,c)){
+          c++;
+        }
+
+      }
+
+    }
+
+    startCol++;
+
+  }
+
+  return lastPosition;
+
+}
+
+/* =====================================================
+   THỐNG KÊ
+===================================================== */
+
+function updatePredictionStats(){
+
+  const digits=
+    getDigits();
+
+  if(!digits.length){
+
+    predictStats.innerHTML="";
+
+    return;
+
+  }
+
+  const values=
+    digits.map(
+      classifyDigit
+    );
+
+  if(currentType==="tx"){
+
+    const t=
+      values.filter(
+        x=>x==="T"
+      ).length;
+
+    const x=
+      values.filter(
+        x=>x==="X"
+      ).length;
+
+    const total=
+      t+x;
+
+    const tp=
+      total
+        ?Math.round(t/total*100)
+        :0;
+
+    const xp=
+      total
+        ?Math.round(x/total*100)
+        :0;
+
+    predictStats.innerHTML=`
+      <span>
+        B: ${t} lần — ${tp}%
+      </span>
+      <span>
+        S: ${x} lần — ${xp}%
+      </span>
+    `;
+
+    return;
+
+  }
+
+  if(currentType==="cl"){
+
+    const c=
+      values.filter(
+        x=>x==="E"
+      ).length;
+
+    const l=
+      values.filter(
+        x=>x==="O"
+      ).length;
+
+    const total=
+      c+l;
+
+    const cp=
+      total
+        ?Math.round(c/total*100)
+        :0;
+
+    const lp=
+      total
+        ?Math.round(l/total*100)
+        :0;
+
+    predictStats.innerHTML=`
+      <span>
+        C: ${c} lần — ${cp}%
+      </span>
+      <span>
+        L: ${l} lần — ${lp}%
+      </span>
+    `;
+
+    return;
+
+  }
+
+  if(currentType==="ps"){
+
+    const s=
+      values.filter(
+        x=>x==="P"
+      ).length;
+
+    const h=
+      values.filter(
+        x=>x==="C"
+      ).length;
+
+    const total=
+      s+h;
+
+    const sp=
+      total
+        ?Math.round(s/total*100)
+        :0;
+
+    const hp=
+      total
+        ?Math.round(h/total*100)
+        :0;
+
+    predictStats.innerHTML=`
+      <span>
+        SNT: ${s} lần — ${sp}%
+      </span>
+
+      <span>
+        SH: ${h} lần — ${hp}%
+      </span>
+
+    `;
+
+  }
+
+}
+
+/* =====================================================
+   CHỌN DỰ ĐOÁN
+===================================================== */
+
+function updatePredictionButtons(){
+
+  if(currentType==="tx"){
+
+    predictX.textContent="KỲ SAU S";
+    predictT.textContent="KỲ SAU B";
+
+  }
+
+  else if(currentType==="cl"){
+
+    predictX.textContent="KỲ SAU O";
+    predictT.textContent="KỲ SAU E";
+
+  }
+
+  else if(currentType==="ps"){
+
+    predictX.textContent="KỲ SAU C";
+    predictT.textContent="KỲ SAU P";
+
+  }
+
+}
+
+function getPredictionValue(type){
+
+  if(currentType==="tx"){
+
+    return type==="X"
+      ?"X"
+      :"T";
+
+  }
+
+  if(currentType==="cl"){
+
+    return type==="X"
+      ?"O"
+      :"E";
+
+  }
+
+  if(currentType==="ps"){
+
+    return type==="X"
+      ?"C"
+      :"P";
+
+  }
+
+  return "";
+
+}
+
+function setPrediction(type){
+
+  prediction=
+    getPredictionValue(type);
+
+  drawCau();
+
+}
+
+predictX.addEventListener(
+  "click",
+  function(e){
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    predictX.classList.remove("flash");
+
+    void predictX.offsetWidth;
+
+    predictX.classList.add("flash");
+
+    setPrediction("X");
+
+  }
+);
+
+predictT.addEventListener(
+  "click",
+  function(e){
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    predictT.classList.remove("flash");
+
+    void predictT.offsetWidth;
+
+    predictT.classList.add("flash");
+
+    setPrediction("T");
+
+  }
+);
+
+/* =====================================================
+   VẼ CẦU
+===================================================== */
+
+function drawCau(){
+
+  updatePredictionButtons();
+
+  if(currentType==="tx"){
+
+    cauTitle.textContent=
+      "CẦU TÀI / XỈU";
+
+  }
+
+  else if(currentType==="cl"){
+
+    cauTitle.textContent=
+      "CẦU CHẴN / LẺ";
+
+  }
+
+  else if(currentType==="ps"){
+
+    cauTitle.textContent=
+      "CẦU SNT / SH";
+
+  }
+
+  const digits=
+    getDigits();
+
+  updatePredictionStats();
+
+  cauArea.innerHTML="";
+
+  if(!digits.length){
+
+    cauArea.innerHTML=`
+
+      <div class="no-data">
+        Chưa có dữ liệu
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  const values=
+    digits
+      .slice()
+      .reverse()
+      .map(
+        classifyDigit
+      );
+
+  const bridge=
+    buildBridge(values);
+
+  const board=
+    document.createElement("div");
+
+  board.className="cau-board";
+
+  let maxCols=0;
+
+  for(
+    let r=0;
+    r<6;
+    r++
+  ){
+
+    if(
+      bridge[r] &&
+      bridge[r].length>maxCols
+    ){
+
+      maxCols=
+        bridge[r].length;
+
+    }
+
+  }
+
+  for(
+    let c=0;
+    c<maxCols;
+    c++
+  ){
+
+    const column=
+      document.createElement("div");
+
+    column.className=
+      "cau-column";
+
+    let hasCell=false;
+
+    for(
+      let r=0;
+      r<6;
+      r++
+    ){
+
+      const value=
+        bridge[r] &&
+        bridge[r][c];
+
+      if(value){
+
+        column.appendChild(
+          makeCell(value)
+        );
+
+        hasCell=true;
+
+      }else{
+
+        const empty=
+          document.createElement("div");
+
+        empty.style.width="24px";
+        empty.style.height="24px";
+        empty.style.flex="none";
+
+        column.appendChild(empty);
+
+      }
+
+    }
+
+    if(hasCell){
+
+      board.appendChild(column);
+
+    }
+
+  }
+
+  for(
+    let i=0;
+    i<4;
+    i++
+  ){
+
+    const emptyColumn=
+      document.createElement("div");
+
+    emptyColumn.className=
+      "cau-column";
+
+    for(
+      let r=0;
+      r<6;
+      r++
+    ){
+
+      const empty=
+        document.createElement("div");
+
+      empty.style.width="24px";
+      empty.style.height="24px";
+      empty.style.flex="none";
+
+      emptyColumn.appendChild(empty);
+
+    }
+
+    board.appendChild(
+      emptyColumn
+    );
+
+  }
+
+  if(
+    prediction==="T" ||
+    prediction==="X" ||
+    prediction==="E" ||
+    prediction==="O" ||
+    prediction==="P" ||
+    prediction==="C"
+  ){
+
+    const nextPos=
+      getPredictionPosition(
+        values,
+        prediction
+      );
+
+    if(nextPos){
+
+      const mark=
+        document.createElement("div");
+
+      mark.className=
+        "predict-mark";
+
+      if(
+        prediction==="T" ||
+        prediction==="O" ||
+        prediction==="P"
+      ){
+
+        mark.classList.add("t");
+
+      }else{
+
+        mark.classList.add("x");
+
+      }
+
+      mark.textContent=
+        prediction==="T"
+          ?"B"
+          :prediction==="X"
+            ?"S"
+            :prediction;
+
+      mark.style.left=
+        (
+          nextPos.col*27+
+          1.5+
+          1
+        )+
+        "px";
+
+      mark.style.top=
+        (
+          nextPos.row*27+
+          1
+        )+
+        "px";
+
+      board.appendChild(mark);
+
+    }
+
+  }
+
+  cauArea.appendChild(board);
+
+}
+
+/* =====================================================
+   Ô CẦU
+===================================================== */
+
+function makeCell(value){
+
+  const cell=
+    document.createElement("div");
+
+  cell.className=
+    "cau-cell";
+
+  if(value==="T"){
+    cell.textContent="B";
+  }
+  else if(value==="X"){
+    cell.textContent="S";
+  }
+  else{
+    cell.textContent=value;
+  }
+
+  if(value==="T"){
+    cell.classList.add("tai");
+  }
+
+  if(value==="X"){
+    cell.classList.add("xiu");
+  }
+
+  if(value==="E"){
+    cell.classList.add("chan");
+  }
+
+  if(value==="O"){
+    cell.classList.add("le");
+  }
+
+  if(value==="P"){
+    cell.classList.add("prime");
+  }
+
+  if(value==="C"){
+    cell.classList.add("composite");
+  }
+
+  return cell;
+
+}
+
+/* =====================================================
+   MỞ NHẬP
+===================================================== */
+
+document
+  .getElementById("openInput")
+  .addEventListener(
+    "click",
+    ()=>{
+
+      cauScreen.style.display=
+        "none";
+
+      inputScreen.style.display=
+        "flex";
+
+      renderInputLists();
+
+    }
+  );
+
+/* =====================================================
+   ĐÓNG NHẬP
+===================================================== */
+
+document
+  .getElementById("closeInput")
+  .addEventListener(
+    "click",
+    ()=>{
+
+      if(document.activeElement){
+        document.activeElement.blur();
+      }
+
+      inputScreen.style.display=
+        "none";
+
+      cauScreen.style.display=
+        "flex";
+
+      loadLatest();
+
+    }
+  );
+
+/* =====================================================
+   TẠO ROW
+===================================================== */
+
+function createRowData(created){
+
+  const rowId=
+    "row_"+
+    Date.now()+
+    "_"+
+    Math.random()
+      .toString(36)
+      .slice(2);
+
+  return {
+
+    rowId:rowId,
+
+    created:created,
+
+    sourceDate:"",
+    sourceDateText:"",
+
+    db:{
+      id:rowId+"_db",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
+    },
+
+    g1:{
+      id:rowId+"_g1",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
+    }
+
+  };
+
+}
+
+/* =====================================================
+   BUILD ROWS
+===================================================== */
+
+function buildRows(){
+
+  const data=
+    ensureCurrent();
+
+  const map=
+    new Map();
+
+  function add(arr,type){
+
+    arr.forEach(
+      (item,index)=>{
+
+        if(!item){
+          return;
+        }
+
+        let rowId=
+          item.rowId;
+
+        if(!rowId){
+
+          rowId=
+            "legacy_"+index;
+
+          item.rowId=
+            rowId;
+
+        }
+
+        if(!map.has(rowId)){
+
+          map.set(
+            rowId,
+            {
+              rowId:rowId,
+              db:null,
+              g1:null,
+              created:
+                Number(item.created)||
+                index+1
+            }
+          );
+
+        }
+
+        const row=
+          map.get(rowId);
+
+        row[type]=
+          item;
+
+        row.created=
+          Math.max(
+            Number(row.created)||0,
+            Number(item.created)||0
+          );
+
+      }
+    );
+
+  }
+
+  add(data.db,"db");
+  add(data.g1,"g1");
+
+  return Array
+    .from(map.values())
+    .sort(
+      (a,b)=>
+        (Number(b.created)||0)-
+        (Number(a.created)||0)
+    );
+
+}
+
+/* =====================================================
+   HIỂN THỊ INPUT
+===================================================== */
+
+function renderInputLists(){
+
+  const inputGrid=
+    document.getElementById("inputGrid");
+
+  inputGrid.innerHTML="";
+
+  let rows=
+    buildRows();
+
+  if(!rows.length){
+
+    const all=
+      loadAll();
+
+    const key=
+      getKey();
+
+    if(!all[key]){
+
+      all[key]={
+        db:[],
+        g1:[]
+      };
+
+    }
+
+    const now=
+      Date.now();
+
+    const row=
+      createRowData(now);
+
+    all[key].db.push(
+      row.db
+    );
+
+    all[key].g1.push(
+      row.g1
+    );
+
+    saveAll(all);
+
+    rows=
+      buildRows();
+
+  }
+
+  rows.forEach(row=>{
+
+    const horizontal=
+      document.createElement("div");
+
+    horizontal.className=
+      "input-row-horizontal";
+
+    createDateInputRow(
+      horizontal,
+      row
+    );
+
+    createInputRow(
+      horizontal,
+      "db",
+      row.db,
+      row.rowId
+    );
+
+    createInputRow(
+      horizontal,
+      "g1",
+      row.g1,
+      row.rowId
+    );
+
+    inputGrid.appendChild(
+      horizontal
+    );
+
+  });
+
+}
+
+/* =====================================================
+   PARSE DÀN
+===================================================== */
+
+function parsePasteNumbers(
+  text,
+  type
+){
+
+  const len=
+    digitLength(type);
+
+  const re=
+    new RegExp(
+      "^\\d{"+len+"}$"
+    );
+
+  return String(text||"")
+    .replace(/\r/g," ")
+    .replace(/\n/g," ")
+    .split(/[\s,;]+/)
+    .map(x=>x.trim())
+    .filter(
+      x=>re.test(x)
+    );
+
+}
+
+/* =====================================================
+   BUILD ROWS TỪ DATA
+===================================================== */
+
+function buildRowsFromData(data){
+
+  const db=
+    Array.isArray(data.db)
+      ?data.db
+      :[];
+
+  const g1=
+    Array.isArray(data.g1)
+      ?data.g1
+      :[];
+
+  const map=
+    new Map();
+
+  function add(arr,type){
+
+    arr.forEach(
+      (item,index)=>{
+
+        if(!item){
+          return;
+        }
+
+        let rowId=
+          item.rowId;
+
+        if(!rowId){
+
+          rowId=
+            "legacy_"+index;
+
+          item.rowId=
+            rowId;
+
+        }
+
+        if(!map.has(rowId)){
+
+          map.set(
+            rowId,
+            {
+              rowId:rowId,
+              db:null,
+              g1:null,
+              created:
+                Number(item.created)||
+                index+1
+            }
+          );
+
+        }
+
+        const row=
+          map.get(rowId);
+
+        row[type]=
+          item;
+
+        row.created=
+          Math.max(
+            Number(row.created)||0,
+            Number(item.created)||0
+          );
+
+      }
+    );
+
+  }
+
+  add(db,"db");
+  add(g1,"g1");
+
+  return Array
+    .from(map.values())
+    .sort(
+      (a,b)=>
+        (Number(b.created)||0)-
+        Number(a.created)||0
+    );
+
+}
+
+/* =====================================================
+   TẠO ROW RỖNG
+===================================================== */
+
+function createEmptyRow(
+  data,
+  created
+){
+
+  const row=
+    createRowData(created);
+
+  data.db.push(
+    row.db
+  );
+
+  data.g1.push(
+    row.g1
+  );
+
+  return row.rowId;
+
+}
+
+/* =====================================================
+   PASTE DÀN
+===================================================== */
+
+function pasteNumbers(
+  type,
+  startRowId,
+  numbers
+){
+
+  if(
+    !numbers ||
+    !numbers.length
+  ){
+    return;
+  }
+
+  const maxDigits=
+    digitLength(type);
+
+  const re=
+    new RegExp(
+      "^\\d{"+maxDigits+"}$"
+    );
+
+  const all=
+    loadAll();
+
+  const key=
+    getKey();
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+  }
+
+  const data=
+    all[key];
+
+  let rows=
+    buildRowsFromData(data);
+
+  let startIndex=
+    rows.findIndex(
+      r=>
+        String(r.rowId)===
+        String(startRowId)
+    );
+
+  if(startIndex<0){
+    return;
+  }
+
+  while(
+    rows.length<
+    startIndex+
+    numbers.length
+  ){
+
+    const rowId=
+      "row_"+
+      Date.now()+
+      "_"+
+      Math.random()
+        .toString(36)
+        .slice(2);
+
+    let minCreated=
+      Date.now();
+
+    [
+      ...data.db,
+      ...data.g1
+    ].forEach(
+      item=>{
+
+        const t=
+          Number(item?.created);
+
+        if(
+          Number.isFinite(t)
+        ){
+
+          minCreated=
+            Math.min(
+              minCreated,
+              t
+            );
+
+        }
+
+      }
+    );
+
+    const created=
+      minCreated-1;
+
+    data.db.push({
+
+      id:rowId+"_db",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
+
+    });
+
+    data.g1.push({
+
+      id:rowId+"_g1",
+      rowId:rowId,
+      number:"",
+      locked:false,
+      created:created
+
+    });
+
+    rows=
+      buildRowsFromData(data);
+
+  }
+
+  const arr=
+    type==="db"
+      ?data.db
+      :data.g1;
+
+  numbers.forEach(
+    (number,i)=>{
+
+      if(!re.test(String(number))){
+        return;
+      }
+
+      const row=
+        rows[
+          startIndex+i
+        ];
+
+      if(!row){
+        return;
+      }
+
+      let item=
+        arr.find(
+          x=>
+            x &&
+            String(x.rowId)===
+            String(row.rowId)
+        );
+
+      if(!item){
+
+        item={
+
+          id:
+            "id_"+
+            Date.now()+
+            "_"+
+            Math.random()
+              .toString(36)
+              .slice(2),
+
+          rowId:row.rowId,
+          number:"",
+          locked:false,
+          created:row.created
+
+        };
+
+        arr.push(item);
+
+      }
+
+      if(item.locked===true){
+        return;
+      }
+
+      item.number=
+        String(number);
+
+      item.locked=true;
+
+    }
+  );
+
+  saveAll(all);
+
+}
+
+/* =====================================================
+   TẠO Ô NHẬP NGÀY
+===================================================== */
+
+function createDateInputRow(
+  column,
+  row
+){
+
+  const box=
+    document.createElement("div");
+
+  box.className="data-row";
+
+  box.dataset.rowId=
+    row.rowId||"";
+
+  const input=
+    document.createElement("input");
+
+  input.type="text";
+  input.inputMode="numeric";
+  input.maxLength=500000;
+  input.className="date-input";
+
+  input.dataset.rowId=
+    row.rowId||"";
+
+  input.value=
+    row.db?.sourceDateText ||
+    row.g1?.sourceDateText ||
+    row.db?.sourceDate ||
+    row.g1?.sourceDate ||
+    "";
+
+  function normalizeDate(value){
+
+    const s=
+      String(value||"")
+        .trim();
+
+    const m=
+      s.match(
+        /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/
+      );
+
+    if(!m){
+      return "";
+    }
+
+    const day=
+      m[1].padStart(2,"0");
+
+    const month=
+      m[2].padStart(2,"0");
+
+    const year=
+      m[3];
+
+    return(
+      day+
+      "-"+
+      month+
+      "-"+
+      year
+    );
+
+  }
+
+  function parseDates(text){
+
+    const raw=
+      String(text||"")
+        .replace(/\r/g,"\n");
+
+    const parts=
+      raw
+        .split(/[\s,;]+/)
+        .map(x=>x.trim())
+        .filter(Boolean);
+
+    const dates=[];
+
+    parts.forEach(part=>{
+
+      const date=
+        normalizeDate(part);
+
+      if(date){
+        dates.push(date);
+      }
+
+    });
+
+    return dates;
+
+  }
+
+  function saveSingleDate(date){
+
+    const all=
+      loadAll();
+
+    const current=
+      all[getKey()];
+
+    if(!current){
+      return;
+    }
+
+    const db=
+      Array.isArray(current.db)
+        ?current.db
+        :[];
+
+    const g1=
+      Array.isArray(current.g1)
+        ?current.g1
+        :[];
+
+    [
+      ...db,
+      ...g1
+    ].forEach(item=>{
+
+      if(
+        item &&
+        String(item.rowId)===
+        String(row.rowId)
+      ){
+
+        item.sourceDate=
+          date;
+
+        if(date){
+
+          const parts=
+            date.split("-");
+
+          if(parts.length===3){
+
+            item.sourceDateText=
+              parts[2]+"/"+
+              parts[1]+"/"+
+              parts[0];
+
+          }
+
+        }else{
+
+          item.sourceDateText="";
+
+        }
+
+      }
+
+    });
+
+    saveAll(all);
+
+  }
+
+  function saveBulkDates(dates){
+
+    if(
+      !Array.isArray(dates) ||
+      !dates.length
+    ){
+      return;
+    }
+
+    const all=
+      loadAll();
+
+    const key=
+      getKey();
+
+    if(!all[key]){
+
+      all[key]={
+        db:[],
+        g1:[]
+      };
+
+    }
+
+    const data=
+      all[key];
+
+    let rows=
+      buildRowsFromData(data);
+
+    const startIndex=
+      rows.findIndex(
+        r=>
+          String(r.rowId)===
+          String(row.rowId)
+      );
+
+    if(startIndex<0){
+      return;
+    }
+
+    while(
+      rows.length<
+      startIndex+
+      dates.length
+    ){
+
+      const rowId=
+        "row_"+
+        Date.now()+
+        "_"+
+        Math.random()
+          .toString(36)
+          .slice(2);
+
+      let oldest=
+        Date.now();
+
+      [
+        ...data.db,
+        ...data.g1
+      ].forEach(item=>{
+
+        const t=
+          Number(item?.created);
+
+        if(
+          Number.isFinite(t)
+        ){
+
+          oldest=
+            Math.min(
+              oldest,
+              t
+            );
+
+        }
+
+      });
+
+      const created=
+        oldest-1;
+
+      data.db.push({
+
+        id:rowId+"_db",
+        rowId:rowId,
+        number:"",
+        locked:false,
+        created:created,
+        sourceDate:"",
+        sourceDateText:""
+
+      });
+
+      data.g1.push({
+
+        id:rowId+"_g1",
+        rowId:rowId,
+        number:"",
+        locked:false,
+        created:created,
+        sourceDate:"",
+        sourceDateText:""
+
+      });
+
+      rows=
+        buildRowsFromData(data);
+
+    }
+
+    dates.forEach(
+      (date,i)=>{
+
+        const targetRow=
+          rows[
+            startIndex+i
+          ];
+
+        if(!targetRow){
+          return;
+        }
+
+        const parts=
+          date.split("-");
+
+        const displayDate=
+          parts.length===3
+            ?(
+              parts[2]+"/"+
+              parts[1]+"/"+
+              parts[0]
+            )
+            :"";
+
+        [
+          ...data.db,
+          ...data.g1
+        ].forEach(item=>{
+
+          if(
+            item &&
+            String(item.rowId)===
+            String(targetRow.rowId)
+          ){
+
+            item.sourceDate=
+              date;
+
+            item.sourceDateText=
+              displayDate;
+
+          }
+
+        });
+
+      }
+    );
+
+    saveAll(all);
+
+  }
+
+  input.addEventListener(
+    "input",
+    function(){
+
+      const raw=
+        String(input.value||"");
+
+      const dates=
+        parseDates(raw);
+
+      if(dates.length>1){
+
+        input.value="";
+
+        saveBulkDates(dates);
+
+        requestAnimationFrame(()=>{
+          renderInputLists();
+        });
+
+        return;
+
+      }
+
+      if(dates.length===1){
+
+        const date=
+          dates[0];
+
+        input.value=
+          date;
+
+        saveSingleDate(date);
+
+        return;
+
+      }
+
+      let v=
+        raw
+          .replace(/\D/g,"")
+          .slice(0,8);
+
+      if(v.length>2){
+
+        v=
+          v.slice(0,2)+
+          "-"+
+          v.slice(2);
+
+      }
+
+      if(v.length>5){
+
+        v=
+          v.slice(0,5)+
+          "-"+
+          v.slice(5);
+
+      }
+
+      input.value=v;
+
+    }
+  );
+
+  input.addEventListener(
+    "paste",
+    function(e){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      let text="";
+
+      try{
+
+        text=
+          e.clipboardData
+            ?(
+              e.clipboardData.getData("text/plain") ||
+              e.clipboardData.getData("text") ||
+              ""
+            )
+            :"";
+
+      }catch(err){
+
+        text="";
+
+      }
+
+      const dates=
+        parseDates(text);
+
+      if(!dates.length){
+        return;
+      }
+
+      if(dates.length===1){
+
+        input.value=
+          dates[0];
+
+        saveSingleDate(
+          dates[0]
+        );
+
+        return;
+
+      }
+
+      saveBulkDates(dates);
+
+      input.value="";
+
+      requestAnimationFrame(()=>{
+        renderInputLists();
+      });
+
+    },
+    true
+  );
+
+  input.addEventListener(
+    "change",
+    function(){
+
+      const date=
+        normalizeDate(
+          input.value
+        );
+
+      if(!date){
+
+        input.value="";
+        saveSingleDate("");
+        return;
+
+      }
+
+      input.value=
+        date;
+
+      saveSingleDate(
+        date
+      );
+
+      loadLatest();
+
+    }
+  );
+
+  box.appendChild(input);
+  column.appendChild(box);
+
+}
+
+/* =====================================================
+   TẠO Ô NHẬP DB / G1
+===================================================== */
+
+function createInputRow(
+  column,
+  type,
+  item,
+  rowId
+){
+
+  const maxDigits =
+    digitLength(type);
+
+  const digitRe =
+    new RegExp(
+      "^\\d{" + maxDigits + "}$"
+    );
+
+  const row =
+    document.createElement("div");
+
+  row.className = "data-row";
+
+  row.dataset.rowId =
+    rowId || "";
+
+  row.dataset.type =
+    type;
+
+  const input =
+    document.createElement("textarea");
+
+  input.className = "row-input";
+
+  if(type === "db"){
+    input.classList.add("db-input");
+  }
+
+  if(type === "g1"){
+    input.classList.add("g1-input");
+  }
+
+  input.inputMode = "numeric";
+
+  input.maxLength = 50000;
+
+  input.rows = 1;
+
+  input.wrap = "off";
+
+  input.autocomplete = "off";
+
+  input.spellcheck = false;
+
+  input.setAttribute(
+    "enterkeyhint",
+    "next"
+  );
+
+  input.dataset.rowId =
+    rowId || "";
+
+  input.dataset.type =
+    type;
+
+  input.value =
+    item
+      ? String(item.number || "")
+      : "";
+
+  /*
+    KHÔNG tự khóa khi nhập đủ số.
+    Cho phép người dùng sửa lại số đã nhập sai.
+  */
+
+  input.readOnly = false;
+
+  input.classList.remove("locked");
+
+
+  row.appendChild(input);
+
+  column.appendChild(row);
+
+
+  /* =========================
+     PASTE
+     ========================= */
+
+  input.addEventListener(
+    "paste",
+    function(e){
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+      const text =
+        e.clipboardData
+          ? e.clipboardData.getData("text")
+          : "";
+
+      const numbers =
+        parsePasteNumbers(
+          text,
+          type
+        );
+
+      if(!numbers.length){
+        return;
+      }
+
+
+      if(numbers.length > 1){
+
+        pasteNumbers(
+          type,
+          rowId,
+          numbers
+        );
+
+        input.value = "";
+
+        requestAnimationFrame(
+          ()=>{
+            renderInputLists();
+          }
+        );
+
+        return;
+      }
+
+
+      if(numbers.length === 1){
+
+        const number =
+          numbers[0];
+
+        if(item){
+
+          updateItem(
+            type,
+            item.id,
+            number
+          );
+
+        }else{
+
+          addNumber(
+            type,
+            number,
+            rowId
+          );
+
+        }
+
+        /*
+          KHÔNG lock ở đây.
+          Cho phép sửa tiếp nếu nhập nhầm.
+        */
+
+        input.readOnly = false;
+
+        input.classList.remove(
+          "locked"
+        );
+
+        requestAnimationFrame(
+          ()=>{
+            renderInputLists();
+          }
+        );
+
+      }
+
+    },
+    true
+  );
+
+
+  /* =========================
+     INPUT
+     ========================= */
+
+  input.addEventListener(
+    "input",
+    function(){
+
+      const raw =
+        String(
+          input.value || ""
+        );
+
+
+      const bulkNumbers =
+        parsePasteNumbers(
+          raw,
+          type
+        );
+
+
+      if(
+        bulkNumbers.length > 1
+      ){
+
+        pasteNumbers(
+          type,
+          rowId,
+          bulkNumbers
+        );
+
+        input.value = "";
+
+        requestAnimationFrame(
+          ()=>{
+            renderInputLists();
+          }
+        );
+
+        return;
+      }
+
+
+      if(
+        bulkNumbers.length === 1 &&
+        /[\s,;\n\r]/.test(raw)
+      ){
+
+        pasteNumbers(
+          type,
+          rowId,
+          bulkNumbers
+        );
+
+        input.value = "";
+
+        requestAnimationFrame(
+          ()=>{
+            renderInputLists();
+          }
+        );
+
+        return;
+      }
+
+
+      let value =
+        raw
+          .replace(/\D/g,"")
+          .slice(0,maxDigits);
+
+
+      input.value = value;
+
+
+      if(item){
+
+        updateItem(
+          type,
+          item.id,
+          value
+        );
+
+        /*
+          QUAN TRỌNG:
+          Không lock khi đủ số.
+        */
+
+        return;
+      }
+
+
+      /*
+        Dòng mới:
+        nhập đủ số thì tạo dữ liệu,
+        nhưng vẫn để ô nhập mở để sửa.
+      */
+
+      if(
+        value.length === maxDigits
+      ){
+
+        addNumber(
+          type,
+          value,
+          rowId
+        );
+
+        input.readOnly = false;
+
+        input.classList.remove(
+          "locked"
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =========================
+     ENTER
+     ========================= */
+
+  input.addEventListener(
+    "keydown",
+    function(e){
+
+      if(e.key !== "Enter"){
+        return;
+      }
+
+      e.preventDefault();
+
+
+      const value =
+        input.value
+          .replace(/\D/g,"")
+          .slice(0,maxDigits);
+
+
+      input.value = value;
+
+
+      if(
+        value.length !== maxDigits
+      ){
+        return;
+      }
+
+
+      if(item){
+
+        updateItem(
+          type,
+          item.id,
+          value
+        );
+
+      }else{
+
+        addNumber(
+          type,
+          value,
+          rowId
+        );
+
+      }
+
+
+      /*
+        KHÔNG khóa ô sau khi Enter.
+        Vẫn cho phép sửa.
+      */
+
+      input.readOnly = false;
+
+      input.classList.remove(
+        "locked"
+      );
+
+
+      if(document.activeElement){
+        document.activeElement.blur();
+      }
+
+
+      renderInputLists();
+
+    }
+  );
+
+}
+
+/* =====================================================
+   KHÓA ITEM
+===================================================== */
+
+function lockItem(
+  type,
+  id
+){
+
+  if(!id){
+    return;
+  }
+
+  const maxDigits=
+    digitLength(type);
+
+  const re=
+    new RegExp(
+      "^\\d{"+maxDigits+"}$"
+    );
+
+  const all=
+    loadAll();
+
+  const current=
+    all[getKey()];
+
+  if(!current){
+    return;
+  }
+
+  const arr=
+    type==="db"
+      ?current.db
+      :current.g1;
+
+  const item=
+    arr.find(
+      x=>x.id===id
+    );
+
+  if(!item){
+    return;
+  }
+
+  if(
+    re.test(
+      String(item.number||"")
+    )
+  ){
+
+    item.locked=true;
+
+    saveAll(all);
+
+  }
+
+}
+
+/* =====================================================
+   CẬP NHẬT ITEM
+===================================================== */
+
+function updateItem(
+  type,
+  id,
+  number
+){
+
+  const maxDigits=
+    digitLength(type);
+
+  const all=
+    loadAll();
+
+  const current=
+    all[getKey()];
+
+  if(!current){
+    return;
+  }
+
+  const arr=
+    type==="db"
+      ?current.db
+      :current.g1;
+
+  const item=
+    arr.find(
+      x=>x.id===id
+    );
+
+  if(!item){
+    return;
+  }
+
+  if(item.locked===true){
+    return;
+  }
+
+  item.number=
+    String(number)
+      .replace(/\D/g,"")
+      .slice(0,maxDigits);
+
+  if(
+    item.number.length===maxDigits
+  ){
+
+    item.locked=true;
+
+  }
+
+  saveAll(all);
+
+}
+
+/* =====================================================
+   THÊM SỐ
+===================================================== */
+
+function addNumber(
+  type,
+  number,
+  rowId
+){
+
+  const maxDigits=
+    digitLength(type);
+
+  number=
+    String(number)
+      .replace(/\D/g,"")
+      .slice(0,maxDigits);
+
+  if(
+    number.length!==maxDigits
+  ){
+    return;
+  }
+
+  const all=
+    loadAll();
+
+  const key=
+    getKey();
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+  }
+
+  const current=
+    all[key];
+
+  const now=
+    Date.now();
+
+  const id=
+    now+
+    "_"+
+    Math.random()
+      .toString(36)
+      .slice(2);
+
+  let finalRowId=
+    rowId;
+
+  if(!finalRowId){
+
+    finalRowId=
+      "row_"+
+      now+
+      "_"+
+      Math.random()
+        .toString(36)
+        .slice(2);
+
+  }
+
+  const arr=
+    type==="db"
+      ?current.db
+      :current.g1;
+
+  const existing=
+    arr.find(
+      x=>
+        x &&
+        String(x.rowId)===
+        String(finalRowId)
+    );
+
+  if(existing){
+
+    if(existing.locked===true){
+      return;
+    }
+
+    existing.number=
+      number;
+
+    existing.locked=true;
+
+    saveAll(all);
+
+    return;
+
+  }
+
+  arr.push({
+
+    id:id,
+    rowId:finalRowId,
+    number:number,
+    locked:true,
+    created:now
+
+  });
+
+  saveAll(all);
+
+}
+
+/* =====================================================
+   THÊM HÀNG TRÊN
+===================================================== */
+
+function addRowTop(){
+
+  const all=
+    loadAll();
+
+  const key=
+    getKey();
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+  }
+
+  const now=
+    Date.now();
+
+  const row=
+    createRowData(now);
+
+  all[key].db.push(
+    row.db
+  );
+
+  all[key].g1.push(
+    row.g1
+  );
+
+  saveAll(all);
+
+  if(document.activeElement){
+    document.activeElement.blur();
+  }
+
+  renderInputLists();
+
+}
+
+/* =====================================================
+   THÊM HÀNG DƯỚI
+===================================================== */
+
+function addRowBottom(){
+
+  const all=
+    loadAll();
+
+  const key=
+    getKey();
+
+  if(!all[key]){
+
+    all[key]={
+      db:[],
+      g1:[]
+    };
+
+  }
+
+  const data=
+    all[key];
+
+  let oldest=
+    Date.now();
+
+  [
+    ...data.db,
+    ...data.g1
+  ].forEach(
+    item=>{
+
+      const t=
+        Number(item?.created);
+
+      if(
+        Number.isFinite(t)
+      ){
+
+        oldest=
+          Math.min(
+            oldest,
+            t
+          );
+
+      }
+
+    }
+  );
+
+  const created=
+    oldest-1;
+
+  const row=
+    createRowData(created);
+
+  data.db.push(
+    row.db
+  );
+
+  data.g1.push(
+    row.g1
+  );
+
+  saveAll(all);
+
+  if(document.activeElement){
+    document.activeElement.blur();
+  }
+
+  renderInputLists();
+
+}
+
+/* =====================================================
+   NÚT THÊM
+===================================================== */
+
+document
+  .getElementById("addTop")
+  .addEventListener(
+    "click",
+    e=>{
+
+      e.preventDefault();
+
+      if(document.activeElement){
+        document.activeElement.blur();
+      }
+
+      addRowTop();
+
+    }
+  );
+
+document
+  .getElementById("addBottom")
+  .addEventListener(
+    "click",
+    e=>{
+
+      e.preventDefault();
+
+      if(document.activeElement){
+        document.activeElement.blur();
+      }
+
+      addRowBottom();
+
+    }
+  );
+
+/* =====================================================
+   KHỞI ĐỘNG
+===================================================== */
+
+renderStations();
+
+</script>
+
+</body>
+</html>
