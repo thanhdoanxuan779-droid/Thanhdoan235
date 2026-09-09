@@ -827,25 +827,6 @@ button{border:0;outline:0}
   background:#eeeeee;
 }
 
-.add-area{
-  height:38px;
-  flex:none;
-  background:#fff;
-  border-top:1px solid #eee;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:5px;
-  padding:4px;
-}
-
-.add-btn{
-  height:29px;
-  border-radius:5px;
-  background:#159eea;
-  color:#fff;
-  font-size:7px;
-  font-weight:900;
-}
 
 @media(max-width:380px){
 
@@ -865,6 +846,19 @@ button{border:0;outline:0}
     font-size:19px;
   }
 
+}
+
+
+/* ================= TẾT / COVID ================= */
+.history-row.special-row .history-number{
+  font-weight:900;
+  font-size:13px;
+}
+.history-row.special-row.tết .history-number{
+  color:#e67e00;
+}
+.history-row.special-row.covid .history-number{
+  color:#d00000;
 }
 
 </style>
@@ -1218,20 +1212,7 @@ button{border:0;outline:0}
       <div class="input-grid" id="inputGrid"></div>
 
     </div>
-
-    <div class="add-area">
-
-      <button type="button" class="add-btn" id="addTop">
-        ＋ THÊM Ô TRÊN
-      </button>
-
-      <button type="button" class="add-btn" id="addBottom">
-        ＋ THÊM Ô DƯỚI
-      </button>
-
-    </div>
-
-  </div>
+</div>
 
 </section>
 
@@ -1362,6 +1343,7 @@ const STATIONS={
 ===================================================== */
 
 const STORE_KEY="XS_CAU_FULL235";
+const AUTO_SYNC_CURSOR_KEY="XS_CAU_SYNC_CURSOR_V2";
 const STORAGE_KEY=STORE_KEY;
 const AUTO_KQ_API=
   "https://thanhdoan235.thanhdoanxuan79.workers.dev";
@@ -1377,6 +1359,56 @@ let autoSyncBusy=false;
 
 /* KQ ONLINE CHỈ LƯU TRONG RAM, KHÔNG NHỒI VÀO localStorage. */
 let onlineStore={};
+
+/* LỊCH ĐẶC BIỆT TẾT/COVID TỪ WORKER */
+let calendarStore=[];
+let calendarBusy=false;
+
+function todayIsoVN(){
+  return new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Asia/Ho_Chi_Minh",
+    year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date());
+}
+
+function calendarStatusForDate(isoDate){
+  const found=calendarStore.find(x=>
+    String(x?.date||x?.isoDate||"")===isoDate &&
+    normalizeWorkerRegion(x?.region||"")===currentRegion &&
+    stationOnlineMatch(currentStation,x?.station||"")
+  );
+  if(!found) return "";
+  const status=String(found.dateStatus||found.status||found.statusLabel||"").toUpperCase();
+  if(status.includes("COVID")) return "COVID";
+  if(status.includes("TẾT") || status.includes("TET")) return "TẾT";
+  return "";
+}
+
+async function syncCalendar(){
+  if(calendarBusy || !currentRegion || !currentStation) return;
+  calendarBusy=true;
+  try{
+    const url=
+      AUTO_KQ_API+
+      "/calendar?region="+encodeURIComponent(currentRegion)+
+      "&station="+encodeURIComponent(currentStation)+
+      "&from=2007-01-01&to="+encodeURIComponent(todayIsoVN())+
+      "&t="+Date.now();
+    const res=await fetch(url,{cache:"no-store",headers:{"Accept":"application/json"}});
+    if(!res.ok) throw new Error("Calendar HTTP "+res.status);
+    const data=await res.json();
+    calendarStore=Array.isArray(data?.calendar)?data.calendar
+      :Array.isArray(data?.results)?data.results
+      :Array.isArray(data?.data)?data.data
+      :Array.isArray(data)?data:[];
+    loadLatest();
+  }catch(e){
+    console.warn("CALENDAR SYNC ERROR",e);
+  }finally{
+    calendarBusy=false;
+  }
+}
+
 
 /* =====================================================
    SỐ CHỮ SỐ
@@ -1693,7 +1725,12 @@ function addOnlineResult(data,item){
     String(item.g1||"").replace(/\D/g,"");
 
   const dbLength=
-    digitLength("db");
+    (
+      r==="mt" ||
+      r==="mn"
+    )
+      ?6
+      :5;
 
   if(
     !new RegExp(
@@ -2048,16 +2085,6 @@ function upsertWorkerPrize(
       day,
       station
     );
-console.log("MAP DEBUG", {
-  region: r,
-  workerDayCode: workerDayCode,
-  day: day,
-  station: station,
-  localStation: localStation,
-  isoDate: isoDate,
-  type: type,
-  number: number
-});
   if(!localStation){
     return false;
   }
@@ -2371,9 +2398,18 @@ async function syncOnlineResults(){
 
     console.log("SYNC: bắt đầu");
 
+    const syncCursor=
+      sessionStorage.getItem(
+        AUTO_SYNC_CURSOR_KEY
+      ) || "";
+
     const url=
       AUTO_KQ_API+
-      "/latest?t="+
+      "/latest?"+
+      (syncCursor
+        ? "since="+encodeURIComponent(syncCursor)+"&"
+        : "")+
+      "t="+
       Date.now();
 
     console.log(
@@ -2423,17 +2459,14 @@ async function syncOnlineResults(){
       results.length
     );
 
-    if(!results.length){
-      throw new Error(
-        "Worker không trả về results"
-      );
-    }
-
     /*
-     * Chỉ tạo cache RAM cho đúng đài đang mở.
-     * Không ghi 13.458 bản ghi vào STORE LOCAL.
+     * KHÔNG lọc theo currentRegion/currentDay/currentStation
+     * tại đây.
+     *
+     * Worker trả dữ liệu nào thì giữ dữ liệu đó.
+     * Bộ lọc miền/ngày/đài chỉ áp dụng lúc hiển thị.
      */
-    const onlineAll={};
+
     let accepted=0;
 
     for(const raw of results){
@@ -2469,26 +2502,6 @@ async function syncOnlineResults(){
         continue;
       }
 
-      if(region!==currentRegion){
-        continue;
-      }
-
-      const day=
-        getDateDayCode(isoDate);
-
-      if(day!==currentDay){
-        continue;
-      }
-
-      if(
-        !stationOnlineMatch(
-          currentStation,
-          station
-        )
-      ){
-        continue;
-      }
-
       const dayCode=
         normalizeWorkerDay(
           raw.dayCode ||
@@ -2497,10 +2510,6 @@ async function syncOnlineResults(){
           isoDate
         );
 
-      /*
-       * Worker hiện tại trả prize + number:
-       * ví dụ DB / G1.
-       */
       if(
         raw.prize!=null &&
         raw.number!=null
@@ -2508,7 +2517,7 @@ async function syncOnlineResults(){
 
         if(
           upsertWorkerRow(
-            onlineAll,
+            onlineStore,
             {
               region:region,
               station:station,
@@ -2524,14 +2533,11 @@ async function syncOnlineResults(){
 
       }
 
-      /*
-       * Giữ tương thích nếu Worker trả dạng db/g1.
-       */
       if(raw.db!=null){
 
         if(
           upsertWorkerPrize(
-            onlineAll,
+            onlineStore,
             "db",
             raw.db,
             isoDate,
@@ -2550,7 +2556,7 @@ async function syncOnlineResults(){
 
         if(
           upsertWorkerPrize(
-            onlineAll,
+            onlineStore,
             "g1",
             raw.g1,
             isoDate,
@@ -2567,29 +2573,37 @@ async function syncOnlineResults(){
 
     }
 
-    sortOnlineStore(onlineAll);
+    sortOnlineStore(onlineStore);
 
     /*
-     * ONLINE CHỈ Ở RAM.
-     * Không gọi localStorage.setItem() tại đây.
+     * Dù results rỗng hay có dữ liệu mới, vẫn giữ
+     * onlineStore cũ. Chỉ cập nhật cursor sau khi
+     * Worker trả HTTP thành công.
      */
-    onlineStore=onlineAll;
+    if(latest?.fetchedAt){
+      sessionStorage.setItem(
+        AUTO_SYNC_CURSOR_KEY,
+        latest.fetchedAt
+      );
+    }
 
     console.log(
-      "SYNC: nhận KQ cho đài hiện tại =",
+      "SYNC: nhận/cập nhật KQ =",
       accepted,
       "bản ghi"
     );
+
+    if(currentStation){
+      syncCalendar();
+    }
 
     if(
       typeof cauScreen!=="undefined" &&
       cauScreen &&
       cauScreen.style.display!=="none"
     ){
-
       loadLatest();
       drawCau();
-
     }
 
   }catch(err){
@@ -2600,7 +2614,7 @@ async function syncOnlineResults(){
     );
 
     alert(
-      "LỖI ĐỒNG BỘ KQ:\\n\\n"+
+      "LỖI ĐỒNG BỘ KQ:\n\n"+
       String(
         err?.message || err
       )
@@ -3064,6 +3078,9 @@ function openStation(day,station){
 
   updateRegionPositionButtons();
 
+  calendarStore=[];
+  syncCalendar();
+
   document
     .querySelectorAll(".position-btn")
     .forEach(x=>{
@@ -3207,8 +3224,19 @@ function loadLatest(){
         )
         :"";
 
+  const latestIso=
+    db.length && db[0].sourceDate
+      ?db[0].sourceDate
+      :g1.length && g1[0].sourceDate
+        ?g1[0].sourceDate
+        :"";
+
+  const latestSpecial=
+    latestIso ? calendarStatusForDate(latestIso) : "";
+
   resultDate.textContent=
-    latestDate;
+    latestDate ||
+    (latestSpecial ? latestSpecial : "");
 
   renderHistory(
     dbHistory,
@@ -3232,32 +3260,45 @@ function renderHistory(box,list){
 
   box.innerHTML="";
 
-  list.forEach(item=>{
+  const rows=new Map();
 
-    const row=
-      document.createElement("div");
-
-    row.className="history-row";
-
-    const date=
-      item.sourceDateText||
-      "";
-
-    row.innerHTML=`
-
-      <span class="history-date">
-        ${date}
-      </span>
-
-      <span class="history-number">
-        ${item.number}
-      </span>
-
-    `;
-
-    box.appendChild(row);
-
+  (Array.isArray(list)?list:[]).forEach(item=>{
+    const iso=String(item?.sourceDate||"");
+    const date=item?.sourceDateText||
+      (iso ? iso.split("-").reverse().join("/") : "");
+    if(!iso) return;
+    rows.set(iso,{date,number:String(item?.number||"")});
   });
+
+  calendarStore.forEach(item=>{
+    const iso=String(item?.date||item?.isoDate||"");
+    if(!iso || rows.has(iso)) return;
+    if(normalizeWorkerRegion(item?.region||"")!==currentRegion) return;
+    if(!stationOnlineMatch(currentStation,item?.station||"")) return;
+    const status=calendarStatusForDate(iso);
+    if(!status) return;
+    rows.set(iso,{
+      date:iso.split("-").reverse().join("/"),
+      number:status,
+      special:status
+    });
+  });
+
+  Array.from(rows.entries())
+    .sort((a,b)=>b[0].localeCompare(a[0]))
+    .forEach(([iso,item])=>{
+      const row=document.createElement("div");
+      row.className="history-row"+(item.special?" special-row "+item.special.toLowerCase():"");
+      const date=document.createElement("span");
+      date.className="history-date";
+      date.textContent=item.date;
+      const number=document.createElement("span");
+      number.className="history-number";
+      number.textContent=item.number;
+      row.appendChild(date);
+      row.appendChild(number);
+      box.appendChild(row);
+    });
 
 }
 
@@ -5134,14 +5175,14 @@ function pasteNumbers(
 
       }
 
-      if(item.locked===true){
+      if(item.online===true){
         return;
       }
 
       item.number=
         String(number);
 
-      item.locked=true;
+      item.locked=false;
 
     }
   );
@@ -5184,6 +5225,15 @@ function createDateInputRow(
     row.db?.sourceDate ||
     row.g1?.sourceDate ||
     "";
+
+  const dateOnline =
+    row.db?.online === true ||
+    row.g1?.online === true;
+
+  if(dateOnline){
+    input.readOnly = true;
+    input.classList.add("locked");
+  }
 
   function normalizeDate(value){
 
@@ -5706,13 +5756,19 @@ function createInputRow(
       : "";
 
   /*
-    KHÔNG tự khóa khi nhập đủ số.
-    Cho phép người dùng sửa lại số đã nhập sai.
+    Dữ liệu từ Worker là dữ liệu online, không phải nhập tay:
+    khóa ô. Dữ liệu nhập tay vẫn được sửa bình thường.
   */
 
-  input.readOnly = false;
+  const isOnline = item?.online === true;
 
-  input.classList.remove("locked");
+  input.readOnly = isOnline;
+
+  if(isOnline){
+    input.classList.add("locked");
+  }else{
+    input.classList.remove("locked");
+  }
 
 
   row.appendChild(input);
@@ -5796,11 +5852,10 @@ function createInputRow(
           Cho phép sửa tiếp nếu nhập nhầm.
         */
 
-        input.readOnly = false;
-
-        input.classList.remove(
-          "locked"
-        );
+        if(!isOnline){
+          input.readOnly = false;
+          input.classList.remove("locked");
+        }
 
         requestAnimationFrame(
           ()=>{
@@ -5923,11 +5978,10 @@ function createInputRow(
           rowId
         );
 
-        input.readOnly = false;
-
-        input.classList.remove(
-          "locked"
-        );
+        if(!isOnline){
+          input.readOnly = false;
+          input.classList.remove("locked");
+        }
 
       }
 
@@ -5990,11 +6044,10 @@ function createInputRow(
         Vẫn cho phép sửa.
       */
 
-      input.readOnly = false;
-
-      input.classList.remove(
-        "locked"
-      );
+      if(!isOnline){
+        input.readOnly = false;
+        input.classList.remove("locked");
+      }
 
 
       if(document.activeElement){
@@ -6105,7 +6158,7 @@ function updateItem(
     return;
   }
 
-  if(item.locked===true){
+  if(item.online===true){
     return;
   }
 
@@ -6114,13 +6167,7 @@ function updateItem(
       .replace(/\D/g,"")
       .slice(0,maxDigits);
 
-  if(
-    item.number.length===maxDigits
-  ){
-
-    item.locked=true;
-
-  }
+  item.locked=false;
 
   saveAll(all);
 
@@ -6208,14 +6255,14 @@ function addNumber(
 
   if(existing){
 
-    if(existing.locked===true){
+    if(existing.online===true){
       return;
     }
 
     existing.number=
       number;
 
-    existing.locked=true;
+    existing.locked=false;
 
     saveAll(all);
 
@@ -6228,7 +6275,7 @@ function addNumber(
     id:id,
     rowId:finalRowId,
     number:number,
-    locked:true,
+    locked:false,
     created:now
 
   });
@@ -6361,22 +6408,6 @@ function addRowBottom(){
    NÚT THÊM
 ===================================================== */
 
-document
-  .getElementById("addTop")
-  .addEventListener(
-    "click",
-    e=>{
-
-      e.preventDefault();
-
-      if(document.activeElement){
-        document.activeElement.blur();
-      }
-
-      addRowTop();
-
-    }
-  );
 
 document
   .getElementById("addBottom")
