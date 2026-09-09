@@ -1361,7 +1361,7 @@ const STATIONS={
    BIẾN
 ===================================================== */
 
-const STORE_KEY="XS_CAU_FULL77999";
+const STORE_KEY="XS_CAU_FULL235";
 const STORAGE_KEY=STORE_KEY;
 const AUTO_KQ_API=
   "https://thanhdoan235.thanhdoanxuan79.workers.dev";
@@ -1374,6 +1374,9 @@ let currentType="tx";
 
 let autoSyncTimer=null;
 let autoSyncBusy=false;
+
+/* KQ ONLINE CHỈ LƯU TRONG RAM, KHÔNG NHỒI VÀO localStorage. */
+let onlineStore={};
 
 /* =====================================================
    SỐ CHỮ SỐ
@@ -1559,10 +1562,49 @@ function loadAll(){
 
 function saveAll(data){
 
-  localStorage.setItem(
-    STORE_KEY,
-    JSON.stringify(data)
-  );
+  try{
+
+    const text=
+      JSON.stringify(data || {});
+
+    console.log(
+      "Kích thước STORE:",
+      text.length,
+      "ký tự"
+    );
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      text
+    );
+
+    console.log("GHI LOCAL OK");
+
+    return true;
+
+  }catch(e){
+
+    console.error(
+      "LOCALSTORAGE ERROR:",
+      e
+    );
+
+    alert(
+      "LOCALSTORAGE ERROR:\n"+
+      e.name+
+      "\n"+
+      e.message+
+      "\n\nSIZE="+
+      (
+        typeof text==="string"
+          ?text.length
+          :"?"
+      )
+    );
+
+    return false;
+
+  }
 
 }
 
@@ -1606,41 +1648,31 @@ function getDateDayCode(isoDate){
 
 function stationOnlineMatch(localName,onlineName){
 
-  const a=
-    String(localName||"")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g,"")
-      .replace(/đ/g,"d")
-      .toLowerCase()
-      .replace(/\./g,"")
-      .replace(/\s+/g," ")
-      .trim();
+  const a=normalize(localName);
+  const b=normalize(onlineName);
 
-  const b=
-    String(onlineName||"")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g,"")
-      .replace(/đ/g,"d")
-      .toLowerCase()
-      .replace(/\./g,"")
-      .replace(/\s+/g," ")
-      .trim();
+  if(!a || !b){
+    return false;
+  }
 
   if(a===b){
     return true;
   }
 
+  /*
+   * Worker và HTML có một số tên đài khác cách ghi:
+   * - TPHCM <-> TP. Hồ Chí Minh
+   * - Huế <-> Thừa Thiên Huế
+   * Giữ alias ở dạng đã normalize để không bị rớt KQ.
+   */
   const aliases={
-    "tp ho chi minh":"ho chi minh",
-    "ho chi minh":"tp ho chi minh",
-    "thua thien hue":"hue",
-    "hue":"thua thien hue"
+    "tphcm":"tphochiminh",
+    "hochiminh":"tphochiminh",
+    "hue":"thuathienhue",
+    "thuathienhue":"thuathienhue"
   };
 
-  return (
-    aliases[a]===b ||
-    aliases[b]===a
-  );
+  return aliases[a]===b || aliases[b]===a;
 
 }
 
@@ -1911,6 +1943,36 @@ function ensureStoreKey(
 }
 
 
+function normalizeWorkerRegion(region){
+
+  const r=normalize(region);
+
+  if(r==="mb" || r==="mienbac" || r==="bac") return "mb";
+  if(r==="mt" || r==="mientrung" || r==="trung") return "mt";
+  if(r==="mn" || r==="miennam" || r==="nam") return "mn";
+
+  return String(region||"").toLowerCase().trim();
+
+}
+
+function normalizeWorkerDay(day,isoDate){
+
+  const s=String(day||"").toUpperCase().trim();
+
+  if(/^(T2|T3|T4|T5|T6|T7|CN)$/.test(s)){
+    return s;
+  }
+
+  if(/^\d+$/.test(s)){
+    const n=Number(s);
+    if(n>=1 && n<=7){
+      return ["CN","T2","T3","T4","T5","T6","T7"][n%7];
+    }
+  }
+
+  return isoDate ? getDateDayCode(isoDate) : "";
+}
+
 function findFrontendStation(
   region,
   day,
@@ -1918,8 +1980,7 @@ function findFrontendStation(
 ){
 
   const r=
-    String(region||"")
-      .toLowerCase();
+    normalizeWorkerRegion(region);
 
   const d=
     String(day||"")
@@ -1965,15 +2026,17 @@ function upsertWorkerPrize(
   isoDate,
   sourceDate,
   region,
-  station
+  station,
+  workerDayCode
 ){
 
   const r=
-    String(region||"")
-      .toLowerCase();
+    normalizeWorkerRegion(region);
 
-  const day=
-    getDateDayCode(isoDate);
+  const day=normalizeWorkerDay(
+    workerDayCode,
+    isoDate
+  );
 
   if(!day){
     return false;
@@ -1985,7 +2048,16 @@ function upsertWorkerPrize(
       day,
       station
     );
-
+console.log("MAP DEBUG", {
+  region: r,
+  workerDayCode: workerDayCode,
+  day: day,
+  station: station,
+  localStation: localStation,
+  isoDate: isoDate,
+  type: type,
+  number: number
+});
   if(!localStation){
     return false;
   }
@@ -2100,8 +2172,7 @@ function upsertWorkerGrouped(
 ){
 
   const r=
-    String(item.region||"")
-      .toLowerCase();
+    normalizeWorkerRegion(item.region);
 
   const isoDate=
     workerDateToIso(
@@ -2140,7 +2211,8 @@ function upsertWorkerGrouped(
         isoDate,
         item.date,
         r,
-        item.station
+        item.station,
+        normalizeWorkerDay(item.dayCode,isoDate)
       ) || changed;
 
   }
@@ -2155,7 +2227,8 @@ function upsertWorkerGrouped(
         isoDate,
         item.date,
         r,
-        item.station
+        item.station,
+        normalizeWorkerDay(item.dayCode,isoDate)
       ) || changed;
 
   }
@@ -2203,7 +2276,8 @@ function upsertWorkerRow(
     isoDate,
     item.date,
     item.region,
-    item.station
+    item.station,
+    item.dayCode
   );
 
 }
@@ -2243,136 +2317,303 @@ function sortOnlineStore(all){
 
 }
 
+function checkStorageSize(){
+
+  try{
+
+    let total=0;
+
+    for(let i=0;i<localStorage.length;i++){
+
+      const key=localStorage.key(i);
+      const value=localStorage.getItem(key)||"";
+
+      total += key.length + value.length;
+
+      console.log(
+        "KEY:",
+        key,
+        "SIZE:",
+        value.length
+      );
+
+    }
+
+    alert(
+      "LOCAL STORAGE\n\n"+
+      "Số key: "+localStorage.length+
+      "\nTổng: "+total+" ký tự"
+    );
+
+  }catch(e){
+
+    alert(
+      "LỖI:\n"+
+      e.name+
+      "\n"+
+      e.message
+    );
+
+  }
+
+}
 /* =====================================================
-   TỰ ĐỘNG LẤY KQ ONLINE
+   TỰ ĐỘNG LẤY TOÀN BỘ KQ ONLINE TỪ WORKER
 ===================================================== */
 
 async function syncOnlineResults(){
+
+  if(autoSyncBusy) return;
+
+  autoSyncBusy=true;
+
   try{
-    const url = AUTO_KQ_API + "/latest?t=" + Date.now();
 
-    const res = await fetch(url, {
-      method:"GET",
-      cache:"no-store"
-    });
+    console.log("SYNC: bắt đầu");
 
-    if(!res.ok){
-      console.log("Worker lỗi:", res.status);
-      return;
-    }
+    const url=
+      AUTO_KQ_API+
+      "/latest?t="+
+      Date.now();
 
-    const data = await res.json();
-
-    if(!data || !data.ok || !Array.isArray(data.results)){
-      console.log("Worker không có dữ liệu hợp lệ");
-      return;
-    }
-
-    const all = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) || "{}"
+    console.log(
+      "SYNC: gọi Worker",
+      url
     );
 
-    let accepted = 0;
-
-    for(const item of data.results){
-
-      if(!item) continue;
-
-      const region = String(item.region || "").toUpperCase();
-      const station = String(item.station || "").trim();
-      const date = workerDateToIso(item.date);
-
-      if(!region || !station || !date) continue;
-
-      const day = getDateDayCode(date);
-
-      if(!day) continue;
-
-      const key = [
-        region,
-        day,
-        station
-      ].join("|");
-
-      ensureStoreKey(all,key);
-
-      /*
-       * Worker dạng từng dòng:
-       * prize + number
-       */
-      if(item.prize && item.number != null){
-
-        const type = getWorkerPrizeType(item.prize);
-
-        if(type && validNumberFor(type,item.number,region)){
-
-          upsertWorkerPrize(
-            all,
-            type,
-            String(item.number),
-            date,
-            item.date,
-            region,
-            station
-          );
-
-          accepted++;
+    const latestRes=
+      await fetch(
+        url,
+        {
+          method:"GET",
+          cache:"no-store",
+          headers:{
+            "Accept":"application/json"
+          }
         }
+      );
 
+    console.log(
+      "SYNC: HTTP",
+      latestRes.status
+    );
+
+    if(!latestRes.ok){
+      throw new Error(
+        "Worker HTTP "+latestRes.status
+      );
+    }
+
+    const latest=
+      await latestRes.json();
+
+    const results=
+      Array.isArray(latest?.results)
+        ?latest.results
+        :Array.isArray(latest?.data)
+          ?latest.data
+          :Array.isArray(latest?.items)
+            ?latest.items
+            :Array.isArray(latest)
+              ?latest
+              :[];
+
+    console.log(
+      "SYNC: số bản ghi Worker =",
+      results.length
+    );
+
+    if(!results.length){
+      throw new Error(
+        "Worker không trả về results"
+      );
+    }
+
+    /*
+     * Chỉ tạo cache RAM cho đúng đài đang mở.
+     * Không ghi 13.458 bản ghi vào STORE LOCAL.
+     */
+    const onlineAll={};
+    let accepted=0;
+
+    for(const raw of results){
+
+      if(!raw) continue;
+
+      const region=
+        normalizeWorkerRegion(
+          raw.region ||
+          raw.regionCode ||
+          raw.area
+        );
+
+      const station=
+        String(
+          raw.station ??
+          raw.province ??
+          ""
+        ).trim();
+
+      const isoDate=
+        workerDateToIso(
+          raw.isoDate ||
+          raw.date ||
+          ""
+        );
+
+      if(
+        !region ||
+        !station ||
+        !isoDate
+      ){
         continue;
       }
 
-      /*
-       * Hỗ trợ luôn Worker dạng nhóm:
-       * {db: "...", g1: "..."}
-       */
-      if(item.db != null || item.g1 != null){
-
-        upsertWorkerGrouped(all,{
-          region,
-          station,
-          date,
-          db:item.db,
-          g1:item.g1,
-          source:item.source || ""
-        });
-
-        accepted++;
+      if(region!==currentRegion){
+        continue;
       }
+
+      const day=
+        getDateDayCode(isoDate);
+
+      if(day!==currentDay){
+        continue;
+      }
+
+      if(
+        !stationOnlineMatch(
+          currentStation,
+          station
+        )
+      ){
+        continue;
+      }
+
+      const dayCode=
+        normalizeWorkerDay(
+          raw.dayCode ||
+          raw.day ||
+          "",
+          isoDate
+        );
+
+      /*
+       * Worker hiện tại trả prize + number:
+       * ví dụ DB / G1.
+       */
+      if(
+        raw.prize!=null &&
+        raw.number!=null
+      ){
+
+        if(
+          upsertWorkerRow(
+            onlineAll,
+            {
+              region:region,
+              station:station,
+              date:isoDate,
+              dayCode:dayCode,
+              prize:raw.prize,
+              number:raw.number
+            }
+          )
+        ){
+          accepted++;
+        }
+
+      }
+
+      /*
+       * Giữ tương thích nếu Worker trả dạng db/g1.
+       */
+      if(raw.db!=null){
+
+        if(
+          upsertWorkerPrize(
+            onlineAll,
+            "db",
+            raw.db,
+            isoDate,
+            raw.date || raw.isoDate,
+            region,
+            station,
+            dayCode
+          )
+        ){
+          accepted++;
+        }
+
+      }
+
+      if(raw.g1!=null){
+
+        if(
+          upsertWorkerPrize(
+            onlineAll,
+            "g1",
+            raw.g1,
+            isoDate,
+            raw.date || raw.isoDate,
+            region,
+            station,
+            dayCode
+          )
+        ){
+          accepted++;
+        }
+
+      }
+
     }
 
-    sortOnlineStore(all);
+    sortOnlineStore(onlineAll);
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(all)
-    );
+    /*
+     * ONLINE CHỈ Ở RAM.
+     * Không gọi localStorage.setItem() tại đây.
+     */
+    onlineStore=onlineAll;
 
     console.log(
-      "Đồng bộ Worker:",
-      data.results.length,
-      "dòng / nhận:",
-      accepted
+      "SYNC: nhận KQ cho đài hiện tại =",
+      accepted,
+      "bản ghi"
     );
 
     if(
-      typeof cauScreen !== "undefined" &&
+      typeof cauScreen!=="undefined" &&
       cauScreen &&
-      !cauScreen.classList.contains("hidden")
+      cauScreen.style.display!=="none"
     ){
-      if(
-        typeof currentRegion !== "undefined" &&
-        typeof currentDay !== "undefined" &&
-        typeof currentStation !== "undefined"
-      ){
-        renderCau();
-      }
+
+      loadLatest();
+      drawCau();
+
     }
 
   }catch(err){
-    console.log("Lỗi đồng bộ Worker:",err);
+
+    console.error(
+      "SYNC ERROR:",
+      err
+    );
+
+    alert(
+      "LỖI ĐỒNG BỘ KQ:\\n\\n"+
+      String(
+        err?.message || err
+      )
+    );
+
+  }finally{
+
+    autoSyncBusy=false;
+
   }
+
 }
+
 /* =====================================================
    TÍNH NGÀY ISO
 ===================================================== */
@@ -2491,6 +2732,14 @@ function startAutoSync(){
   }
 
   syncOnlineResults();
+
+  autoSyncTimer=
+    setInterval(
+      ()=>{
+        syncOnlineResults();
+      },
+      60000
+    );
 
 }
 /* =====================================================
@@ -2615,6 +2864,32 @@ function ensureCurrent(){
 
   if(changed){
     saveAll(all);
+  }
+
+  /*
+   * Trộn KQ ONLINE trong RAM vào dữ liệu trả cho giao diện.
+   * Không sửa current trong localStorage.
+   */
+  const online=
+    onlineStore[key];
+
+  if(online){
+
+    return {
+      db:[
+        ...current.db,
+        ...(Array.isArray(online.db)
+          ?online.db
+          :[])
+      ],
+      g1:[
+        ...current.g1,
+        ...(Array.isArray(online.g1)
+          ?online.g1
+          :[])
+      ]
+    };
+
   }
 
   return current;
@@ -2818,7 +3093,7 @@ function openStation(day,station){
 
   loadLatest();
 
-  startAutoSync();
+startAutoSync();
 
 }
 
@@ -6131,8 +6406,8 @@ window.addEventListener(
 
 renderStations();
 
-/* Đồng bộ toàn bộ dữ liệu Worker khi mở app */
-syncOnlineResults();
+/* Đồng bộ toàn bộ dữ liệu Worker khi mở app và mỗi 60 giây */
+startAutoSync();
 
 </script>
 
