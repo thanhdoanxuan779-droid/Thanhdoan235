@@ -474,9 +474,12 @@ button{border:0;outline:0}
   margin-top:3px;
   background:#dff3ff;
   border-radius:7px;
-  overflow:auto;
+  overflow-x:hidden;
+  overflow-y:auto;
   padding:6px;
   direction:rtl;
+  touch-action:pan-y;
+  overscroll-behavior-x:contain;
 }
 
 .cau-title{
@@ -562,6 +565,45 @@ button{border:0;outline:0}
 .predict-mark.x{color:#168bd0}
 
 /* ================= CARO ================= */
+
+.cau-board-wrap{
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:none;
+  touch-action:pan-x;
+  scroll-behavior:auto;
+  scrollbar-width:none;
+  direction:ltr;
+  padding-bottom:2px;
+}
+.cau-board-wrap::-webkit-scrollbar{
+  display:none;
+}
+.cau-scrollbar{
+  width:100%;
+  height:10px;
+  margin-top:3px;
+  padding:2px 0;
+  background:#d5dce3;
+  border-radius:8px;
+  box-sizing:border-box;
+  position:relative;
+  touch-action:none;
+}
+.cau-scrollbar-thumb{
+  position:absolute;
+  left:0;
+  top:2px;
+  height:6px;
+  min-width:28px;
+  background:#8b98a6;
+  border-radius:6px;
+  transform:translateX(0);
+  touch-action:none;
+}
 
 .cau-board{
   position:relative;
@@ -827,6 +869,25 @@ button{border:0;outline:0}
   background:#eeeeee;
 }
 
+.add-area{
+  height:38px;
+  flex:none;
+  background:#fff;
+  border-top:1px solid #eee;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  padding:4px;
+}
+
+.add-btn{
+  height:29px;
+  border-radius:5px;
+  background:#159eea;
+  color:#fff;
+  font-size:7px;
+  font-weight:900;
+}
 
 @media(max-width:380px){
 
@@ -846,19 +907,6 @@ button{border:0;outline:0}
     font-size:19px;
   }
 
-}
-
-
-/* ================= TẾT / COVID ================= */
-.history-row.special-row .history-number{
-  font-weight:900;
-  font-size:13px;
-}
-.history-row.special-row.tết .history-number{
-  color:#e67e00;
-}
-.history-row.special-row.covid .history-number{
-  color:#d00000;
 }
 
 </style>
@@ -1212,7 +1260,10 @@ button{border:0;outline:0}
       <div class="input-grid" id="inputGrid"></div>
 
     </div>
-</div>
+
+
+
+  </div>
 
 </section>
 
@@ -1343,7 +1394,6 @@ const STATIONS={
 ===================================================== */
 
 const STORE_KEY="XS_CAU_FULL235";
-const AUTO_SYNC_CURSOR_KEY="XS_CAU_SYNC_CURSOR_V2";
 const STORAGE_KEY=STORE_KEY;
 const AUTO_KQ_API=
   "https://thanhdoan235.thanhdoanxuan79.workers.dev";
@@ -1359,56 +1409,6 @@ let autoSyncBusy=false;
 
 /* KQ ONLINE CHỈ LƯU TRONG RAM, KHÔNG NHỒI VÀO localStorage. */
 let onlineStore={};
-
-/* LỊCH ĐẶC BIỆT TẾT/COVID TỪ WORKER */
-let calendarStore=[];
-let calendarBusy=false;
-
-function todayIsoVN(){
-  return new Intl.DateTimeFormat("en-CA",{
-    timeZone:"Asia/Ho_Chi_Minh",
-    year:"numeric",month:"2-digit",day:"2-digit"
-  }).format(new Date());
-}
-
-function calendarStatusForDate(isoDate){
-  const found=calendarStore.find(x=>
-    String(x?.date||x?.isoDate||"")===isoDate &&
-    normalizeWorkerRegion(x?.region||"")===currentRegion &&
-    stationOnlineMatch(currentStation,x?.station||"")
-  );
-  if(!found) return "";
-  const status=String(found.dateStatus||found.status||found.statusLabel||"").toUpperCase();
-  if(status.includes("COVID")) return "COVID";
-  if(status.includes("TẾT") || status.includes("TET")) return "TẾT";
-  return "";
-}
-
-async function syncCalendar(){
-  if(calendarBusy || !currentRegion || !currentStation) return;
-  calendarBusy=true;
-  try{
-    const url=
-      AUTO_KQ_API+
-      "/calendar?region="+encodeURIComponent(currentRegion)+
-      "&station="+encodeURIComponent(currentStation)+
-      "&from=2007-01-01&to="+encodeURIComponent(todayIsoVN())+
-      "&t="+Date.now();
-    const res=await fetch(url,{cache:"no-store",headers:{"Accept":"application/json"}});
-    if(!res.ok) throw new Error("Calendar HTTP "+res.status);
-    const data=await res.json();
-    calendarStore=Array.isArray(data?.calendar)?data.calendar
-      :Array.isArray(data?.results)?data.results
-      :Array.isArray(data?.data)?data.data
-      :Array.isArray(data)?data:[];
-    loadLatest();
-  }catch(e){
-    console.warn("CALENDAR SYNC ERROR",e);
-  }finally{
-    calendarBusy=false;
-  }
-}
-
 
 /* =====================================================
    SỐ CHỮ SỐ
@@ -1621,7 +1621,7 @@ function saveAll(data){
       e
     );
 
-    alert(
+    console.error(
       "LOCALSTORAGE ERROR:\n"+
       e.name+
       "\n"+
@@ -1725,12 +1725,7 @@ function addOnlineResult(data,item){
     String(item.g1||"").replace(/\D/g,"");
 
   const dbLength=
-    (
-      r==="mt" ||
-      r==="mn"
-    )
-      ?6
-      :5;
+    digitLength("db");
 
   if(
     !new RegExp(
@@ -2085,6 +2080,16 @@ function upsertWorkerPrize(
       day,
       station
     );
+console.log("MAP DEBUG", {
+  region: r,
+  workerDayCode: workerDayCode,
+  day: day,
+  station: station,
+  localStation: localStation,
+  isoDate: isoDate,
+  type: type,
+  number: number
+});
   if(!localStation){
     return false;
   }
@@ -2366,7 +2371,7 @@ function checkStorageSize(){
 
     }
 
-    alert(
+    console.error(
       "LOCAL STORAGE\n\n"+
       "Số key: "+localStorage.length+
       "\nTổng: "+total+" ký tự"
@@ -2374,7 +2379,7 @@ function checkStorageSize(){
 
   }catch(e){
 
-    alert(
+    console.error(
       "LỖI:\n"+
       e.name+
       "\n"+
@@ -2398,24 +2403,12 @@ async function syncOnlineResults(){
 
     console.log("SYNC: bắt đầu");
 
-    const syncCursor=
-      sessionStorage.getItem(
-        AUTO_SYNC_CURSOR_KEY
-      ) || "";
-
     const url=
       AUTO_KQ_API+
-      "/latest?"+
-      (syncCursor
-        ? "since="+encodeURIComponent(syncCursor)+"&"
-        : "")+
-      "t="+
+      "/latest?t="+
       Date.now();
 
-    console.log(
-      "SYNC: gọi Worker",
-      url
-    );
+    console.log("SYNC: gọi Worker",url);
 
     const latestRes=
       await fetch(
@@ -2429,10 +2422,7 @@ async function syncOnlineResults(){
         }
       );
 
-    console.log(
-      "SYNC: HTTP",
-      latestRes.status
-    );
+    console.log("SYNC: HTTP",latestRes.status);
 
     if(!latestRes.ok){
       throw new Error(
@@ -2459,14 +2449,20 @@ async function syncOnlineResults(){
       results.length
     );
 
-    /*
-     * KHÔNG lọc theo currentRegion/currentDay/currentStation
-     * tại đây.
-     *
-     * Worker trả dữ liệu nào thì giữ dữ liệu đó.
-     * Bộ lọc miền/ngày/đài chỉ áp dụng lúc hiển thị.
-     */
+    if(!results.length){
+      throw new Error(
+        "Worker không trả về dữ liệu"
+      );
+    }
 
+    /*
+     * Quan trọng:
+     * - Không đọc STORE lớn từ localStorage.
+     * - Không ghi 13.458 bản ghi vào localStorage.
+     * - Toàn bộ KQ lấy từ Worker chỉ giữ trong RAM.
+     * - Lưu theo đúng key miền|thứ|đài để khi đổi đài vẫn dùng được ngay.
+     */
+    const onlineAll={};
     let accepted=0;
 
     for(const raw of results){
@@ -2475,8 +2471,8 @@ async function syncOnlineResults(){
 
       const region=
         normalizeWorkerRegion(
-          raw.region ||
-          raw.regionCode ||
+          raw.region ??
+          raw.regionCode ??
           raw.area
         );
 
@@ -2484,40 +2480,45 @@ async function syncOnlineResults(){
         String(
           raw.station ??
           raw.province ??
+          raw.name ??
           ""
         ).trim();
 
-      const isoDate=
-        workerDateToIso(
-          raw.isoDate ||
-          raw.date ||
-          ""
-        );
+      const sourceDate=
+        raw.isoDate ??
+        raw.date ??
+        raw.resultDate ??
+        "";
 
-      if(
-        !region ||
-        !station ||
-        !isoDate
-      ){
+      const isoDate=
+        workerDateToIso(sourceDate);
+
+      if(!region || !station || !isoDate){
         continue;
       }
 
       const dayCode=
         normalizeWorkerDay(
-          raw.dayCode ||
-          raw.day ||
+          raw.dayCode ??
+          raw.day ??
+          raw.weekday ??
           "",
           isoDate
         );
 
+      if(!dayCode){
+        continue;
+      }
+
+      /* Worker hiện tại: prize + number */
       if(
         raw.prize!=null &&
         raw.number!=null
       ){
 
-        if(
+        const ok=
           upsertWorkerRow(
-            onlineStore,
+            onlineAll,
             {
               region:region,
               station:station,
@@ -2526,98 +2527,86 @@ async function syncOnlineResults(){
               prize:raw.prize,
               number:raw.number
             }
-          )
-        ){
-          accepted++;
-        }
+          );
+
+        if(ok) accepted++;
 
       }
 
+      /* Tương thích Worker dạng db/g1 */
       if(raw.db!=null){
 
-        if(
+        const ok=
           upsertWorkerPrize(
-            onlineStore,
+            onlineAll,
             "db",
             raw.db,
             isoDate,
-            raw.date || raw.isoDate,
+            sourceDate,
             region,
             station,
             dayCode
-          )
-        ){
-          accepted++;
-        }
+          );
+
+        if(ok) accepted++;
 
       }
 
       if(raw.g1!=null){
 
-        if(
+        const ok=
           upsertWorkerPrize(
-            onlineStore,
+            onlineAll,
             "g1",
             raw.g1,
             isoDate,
-            raw.date || raw.isoDate,
+            sourceDate,
             region,
             station,
             dayCode
-          )
-        ){
-          accepted++;
-        }
+          );
+
+        if(ok) accepted++;
 
       }
 
     }
 
-    sortOnlineStore(onlineStore);
+    sortOnlineStore(onlineAll);
 
-    /*
-     * Dù results rỗng hay có dữ liệu mới, vẫn giữ
-     * onlineStore cũ. Chỉ cập nhật cursor sau khi
-     * Worker trả HTTP thành công.
-     */
-    if(latest?.fetchedAt){
-      sessionStorage.setItem(
-        AUTO_SYNC_CURSOR_KEY,
-        latest.fetchedAt
-      );
-    }
+    /* Chỉ giữ RAM, tuyệt đối không ghi localStorage. */
+    onlineStore=onlineAll;
 
     console.log(
-      "SYNC: nhận/cập nhật KQ =",
+      "SYNC: đã nhận KQ online =",
       accepted,
       "bản ghi"
     );
+    console.log(
+      "SYNC: số key online =",
+      Object.keys(onlineStore).length
+    );
 
-    if(currentStation){
-      syncCalendar();
-    }
-
+    /* Nếu đang mở màn KQ thì vẽ lại ngay. */
     if(
       typeof cauScreen!=="undefined" &&
       cauScreen &&
       cauScreen.style.display!=="none"
     ){
+
       loadLatest();
       drawCau();
+
     }
 
   }catch(err){
 
-    console.error(
-      "SYNC ERROR:",
-      err
-    );
+    console.error("SYNC ERROR:",err);
 
-    alert(
-      "LỖI ĐỒNG BỘ KQ:\n\n"+
-      String(
-        err?.message || err
-      )
+    /* Không bật alert mỗi 60 giây nếu mạng/Worker tạm lỗi. */
+    console.warn(
+      "Không lấy được KQ online:",
+      String(err?.message || err)
     );
 
   }finally{
@@ -2775,7 +2764,8 @@ function ensureCurrent(){
       g1:[]
     };
 
-    saveAll(all);
+    /* Không bắt buộc ghi key rỗng vào localStorage.
+       Tránh quota làm chặn KQ online. */
 
   }
 
@@ -2881,29 +2871,50 @@ function ensureCurrent(){
   }
 
   /*
-   * Trộn KQ ONLINE trong RAM vào dữ liệu trả cho giao diện.
-   * Không sửa current trong localStorage.
+   * Trộn KQ ONLINE trong RAM với dữ liệu local.
+   * Cùng một ngày chỉ giữ 1 kết quả; ONLINE được ưu tiên.
    */
-  const online=
-    onlineStore[key];
+  const online=onlineStore[key];
 
   if(online){
 
-    return {
-      db:[
-        ...current.db,
-        ...(Array.isArray(online.db)
-          ?online.db
-          :[])
-      ],
-      g1:[
-        ...current.g1,
-        ...(Array.isArray(online.g1)
-          ?online.g1
-          :[])
-      ]
-    };
+    function mergePrize(localList,onlineList,type){
+      const map=new Map();
 
+      function add(item,isOnline){
+        if(!item) return;
+
+        const number=String(item.number||"").replace(/\D/g,"");
+        if(!validNumberFor(type,number,currentRegion)) return;
+
+        const date=String(item.sourceDate||"").trim();
+        const key2=(date && /^\d{4}-\d{2}-\d{2}$/.test(date))
+          ?"date:"+date
+          :"row:"+String(item.rowId||item.id||Math.random());
+
+        const old=map.get(key2);
+        if(!old || (isOnline && old.__online!==true)){
+          map.set(key2,{...item,number:number,__online:!!isOnline});
+        }
+      }
+
+      (Array.isArray(localList)?localList:[]).forEach(x=>add(x,false));
+      (Array.isArray(onlineList)?onlineList:[]).forEach(x=>add(x,true));
+
+      return Array.from(map.values())
+        .sort((a,b)=>{
+          const da=String(a.sourceDate||"");
+          const db=String(b.sourceDate||"");
+          if(da && db && da!==db) return db.localeCompare(da);
+          return (Number(b.created)||0)-(Number(a.created)||0);
+        })
+        .map(x=>{ const y={...x}; delete y.__online; return y; });
+    }
+
+    return {
+      db:mergePrize(current.db,online.db,"db"),
+      g1:mergePrize(current.g1,online.g1,"g1")
+    };
   }
 
   return current;
@@ -3078,9 +3089,6 @@ function openStation(day,station){
 
   updateRegionPositionButtons();
 
-  calendarStore=[];
-  syncCalendar();
-
   document
     .querySelectorAll(".position-btn")
     .forEach(x=>{
@@ -3110,6 +3118,7 @@ function openStation(day,station){
 
   loadLatest();
 
+  checkStorageSize();
 startAutoSync();
 
 }
@@ -3152,33 +3161,34 @@ document
 
 function newest(list,type){
 
-  const len=
-    digitLength(type);
+  const len=digitLength(type);
+  const re=new RegExp("^\\d{"+len+"}$");
+  const map=new Map();
 
-  const re=
-    new RegExp(
-      "^\\d{"+len+"}$"
-    );
+  (Array.isArray(list)?list:[]).forEach((x,index)=>{
+    if(!x) return;
 
-  return (list||[])
-    .filter(
-      x=>
-        x &&
-        re.test(
-          String(x.number||"")
-        )
-    )
-    .slice()
-    .sort(
-      (a,b)=>{
+    const number=String(x.number||"").replace(/\D/g,"");
+    if(!re.test(number)) return;
 
-        return (
-          (Number(b.created)||0)-
-          (Number(a.created)||0)
-        );
+    const date=String(x.sourceDate||"").trim();
+    const key=(date && /^\d{4}-\d{2}-\d{2}$/.test(date))
+      ?"date:"+date
+      :"row:"+String(x.rowId||x.id||index);
 
-      }
-    );
+    const item={...x,number:number};
+    const old=map.get(key);
+    if(!old || (x.online===true && old.online!==true)){
+      map.set(key,item);
+    }
+  });
+
+  return Array.from(map.values()).sort((a,b)=>{
+    const da=String(a.sourceDate||"");
+    const db=String(b.sourceDate||"");
+    if(da && db && da!==db) return db.localeCompare(da);
+    return (Number(b.created)||0)-(Number(a.created)||0);
+  });
 
 }
 
@@ -3224,19 +3234,8 @@ function loadLatest(){
         )
         :"";
 
-  const latestIso=
-    db.length && db[0].sourceDate
-      ?db[0].sourceDate
-      :g1.length && g1[0].sourceDate
-        ?g1[0].sourceDate
-        :"";
-
-  const latestSpecial=
-    latestIso ? calendarStatusForDate(latestIso) : "";
-
   resultDate.textContent=
-    latestDate ||
-    (latestSpecial ? latestSpecial : "");
+    latestDate;
 
   renderHistory(
     dbHistory,
@@ -3260,45 +3259,32 @@ function renderHistory(box,list){
 
   box.innerHTML="";
 
-  const rows=new Map();
+  list.forEach(item=>{
 
-  (Array.isArray(list)?list:[]).forEach(item=>{
-    const iso=String(item?.sourceDate||"");
-    const date=item?.sourceDateText||
-      (iso ? iso.split("-").reverse().join("/") : "");
-    if(!iso) return;
-    rows.set(iso,{date,number:String(item?.number||"")});
+    const row=
+      document.createElement("div");
+
+    row.className="history-row";
+
+    const date=
+      item.sourceDateText||
+      "";
+
+    row.innerHTML=`
+
+      <span class="history-date">
+        ${date}
+      </span>
+
+      <span class="history-number">
+        ${item.number}
+      </span>
+
+    `;
+
+    box.appendChild(row);
+
   });
-
-  calendarStore.forEach(item=>{
-    const iso=String(item?.date||item?.isoDate||"");
-    if(!iso || rows.has(iso)) return;
-    if(normalizeWorkerRegion(item?.region||"")!==currentRegion) return;
-    if(!stationOnlineMatch(currentStation,item?.station||"")) return;
-    const status=calendarStatusForDate(iso);
-    if(!status) return;
-    rows.set(iso,{
-      date:iso.split("-").reverse().join("/"),
-      number:status,
-      special:status
-    });
-  });
-
-  Array.from(rows.entries())
-    .sort((a,b)=>b[0].localeCompare(a[0]))
-    .forEach(([iso,item])=>{
-      const row=document.createElement("div");
-      row.className="history-row"+(item.special?" special-row "+item.special.toLowerCase():"");
-      const date=document.createElement("span");
-      date.className="history-date";
-      date.textContent=item.date;
-      const number=document.createElement("span");
-      number.className="history-number";
-      number.textContent=item.number;
-      row.appendChild(date);
-      row.appendChild(number);
-      box.appendChild(row);
-    });
 
 }
 
@@ -4548,7 +4534,217 @@ function drawCau(){
 
   }
 
-  cauArea.appendChild(board);
+  const boardWrap=document.createElement("div");
+  boardWrap.className="cau-board-wrap";
+  boardWrap.appendChild(board);
+
+  /* Thanh con lăn riêng, luôn nhìn thấy trên iPhone/iPad. */
+  const scrollBar=document.createElement("div");
+  scrollBar.className="cau-scrollbar";
+
+  const scrollThumb=document.createElement("div");
+  scrollThumb.className="cau-scrollbar-thumb";
+  scrollBar.appendChild(scrollThumb);
+
+  cauArea.appendChild(boardWrap);
+  cauArea.appendChild(scrollBar);
+
+  function updateCauScrollbar(){
+    const view=boardWrap.clientWidth;
+    const total=boardWrap.scrollWidth;
+    const track=scrollBar.clientWidth;
+
+    if(!view || !total || !track) return;
+
+    const maxScroll=Math.max(0,total-view);
+
+    if(maxScroll<=0){
+      scrollBar.style.display="none";
+      return;
+    }
+
+    scrollBar.style.display="block";
+
+    const thumbW=Math.max(
+      28,
+      track*(view/total)
+    );
+
+    const maxThumb=track-thumbW;
+    const left=maxScroll>0
+      ? (boardWrap.scrollLeft/maxScroll)*maxThumb
+      : 0;
+
+    scrollThumb.style.width=thumbW+"px";
+    scrollThumb.style.transform="translateX("+left+"px)";
+  }
+
+  boardWrap.addEventListener("scroll",updateCauScrollbar,{passive:true});
+  window.addEventListener("resize",updateCauScrollbar);
+
+  /* Kéo trực tiếp vào con lăn. */
+  let barDragStartX=0;
+  let barStartScroll=0;
+
+  scrollThumb.addEventListener("touchstart",function(e){
+    e.preventDefault();
+    if(inertiaFrame){
+      cancelAnimationFrame(inertiaFrame);
+      inertiaFrame=0;
+    }
+    barDragStartX=e.touches[0].clientX;
+    barStartScroll=boardWrap.scrollLeft;
+  },{passive:false});
+
+  scrollThumb.addEventListener("touchmove",function(e){
+    e.preventDefault();
+
+    const total=boardWrap.scrollWidth;
+    const view=boardWrap.clientWidth;
+    const track=scrollBar.clientWidth;
+    const thumbW=scrollThumb.offsetWidth;
+    const maxScroll=Math.max(0,total-view);
+    const maxThumb=Math.max(1,track-thumbW);
+
+    boardWrap.scrollLeft=
+      barStartScroll+
+      (e.touches[0].clientX-barDragStartX)*
+      (maxScroll/maxThumb);
+
+    updateCauScrollbar();
+  },{passive:false});
+
+  /* Bấm vào rãnh: nhảy tới vị trí tương ứng. */
+  scrollBar.addEventListener("touchstart",function(e){
+    if(e.target===scrollThumb) return;
+
+    const rect=scrollBar.getBoundingClientRect();
+    const track=scrollBar.clientWidth;
+    const total=boardWrap.scrollWidth;
+    const view=boardWrap.clientWidth;
+    const maxScroll=Math.max(0,total-view);
+    const thumbW=scrollThumb.offsetWidth;
+    const maxThumb=Math.max(1,track-thumbW);
+
+    const x=e.touches[0].clientX-rect.left;
+    const target=Math.max(0,Math.min(maxThumb,x-thumbW/2));
+
+    boardWrap.scrollLeft=(target/maxThumb)*maxScroll;
+    updateCauScrollbar();
+  },{passive:true});
+
+  /* Mở Cầu là đứng ngay cột cuối bên phải, không cần kéo. */
+  requestAnimationFrame(()=>{
+    boardWrap.scrollLeft=Math.max(
+      0,
+      boardWrap.scrollWidth-boardWrap.clientWidth
+    );
+    updateCauScrollbar();
+  });
+
+  /*
+   * Vuốt 1:1 theo ngón tay.
+   * Hất càng mạnh -> quán tính càng nhanh, nhưng chỉ chạy SAU khi nhả tay.
+   */
+  let lastTouchX=null;
+  let lastTouchTime=0;
+  let velocity=0;
+  let inertiaFrame=0;
+
+  boardWrap.addEventListener("touchstart",function(e){
+    if(inertiaFrame){
+      cancelAnimationFrame(inertiaFrame);
+      inertiaFrame=0;
+    }
+
+    if(e.touches && e.touches.length){
+      lastTouchX=e.touches[0].clientX;
+      lastTouchTime=performance.now();
+      velocity=0;
+    }
+  },{passive:true});
+
+  boardWrap.addEventListener("touchmove",function(e){
+    if(lastTouchX===null || !e.touches || !e.touches.length) return;
+    e.preventDefault();
+
+    const now=performance.now();
+    const x=e.touches[0].clientX;
+    const dt=Math.max(8,now-lastTouchTime);
+    const dx=x-lastTouchX;
+
+    lastTouchX=x;
+    lastTouchTime=now;
+
+    const maxScroll=Math.max(
+      0,
+      boardWrap.scrollWidth-boardWrap.clientWidth
+    );
+
+    /* 1px ngón tay = 1px bảng, tuyệt đối không nhân tốc độ. */
+    let next=boardWrap.scrollLeft-dx;
+
+    if(next<0) next=0;
+    if(next>maxScroll) next=maxScroll;
+
+    boardWrap.scrollLeft=next;
+
+    /* Lấy vận tốc vuốt thực tế, làm mượt để cú hất mạnh không bị mất ở frame cuối. */
+    const instantVelocity=(-dx/dt)*1000;
+    velocity=(velocity*0.55)+(instantVelocity*0.45);
+
+    if(velocity>3500) velocity=3500;
+    if(velocity<-3500) velocity=-3500;
+  },{passive:false});
+
+  function runInertia(){
+    const maxScroll=Math.max(
+      0,
+      boardWrap.scrollWidth-boardWrap.clientWidth
+    );
+
+    /* Vuốt nhẹ: dừng hẳn khi nhả tay. */
+    if(Math.abs(velocity)<650){
+      velocity=0;
+      inertiaFrame=0;
+      return;
+    }
+
+    let next=boardWrap.scrollLeft+(velocity/60);
+
+    if(next<=0){
+      boardWrap.scrollLeft=0;
+      velocity=0;
+      inertiaFrame=0;
+      return;
+    }
+
+    if(next>=maxScroll){
+      boardWrap.scrollLeft=maxScroll;
+      velocity=0;
+      inertiaFrame=0;
+      return;
+    }
+
+    boardWrap.scrollLeft=next;
+    velocity*=0.93;
+
+    inertiaFrame=requestAnimationFrame(runInertia);
+  }
+
+  boardWrap.addEventListener("touchend",function(){
+    lastTouchX=null;
+    lastTouchTime=0;
+    runInertia();
+  },{passive:true});
+
+  boardWrap.addEventListener("touchcancel",function(){
+    lastTouchX=null;
+    lastTouchTime=0;
+    runInertia();
+  },{passive:true});
+
+  updateCauScrollbar();
 
 }
 
@@ -5175,14 +5371,14 @@ function pasteNumbers(
 
       }
 
-      if(item.online===true){
+      if(item.locked===true){
         return;
       }
 
       item.number=
         String(number);
 
-      item.locked=false;
+      item.locked=true;
 
     }
   );
@@ -5225,15 +5421,6 @@ function createDateInputRow(
     row.db?.sourceDate ||
     row.g1?.sourceDate ||
     "";
-
-  const dateOnline =
-    row.db?.online === true ||
-    row.g1?.online === true;
-
-  if(dateOnline){
-    input.readOnly = true;
-    input.classList.add("locked");
-  }
 
   function normalizeDate(value){
 
@@ -5756,19 +5943,13 @@ function createInputRow(
       : "";
 
   /*
-    Dữ liệu từ Worker là dữ liệu online, không phải nhập tay:
-    khóa ô. Dữ liệu nhập tay vẫn được sửa bình thường.
+    KHÔNG tự khóa khi nhập đủ số.
+    Cho phép người dùng sửa lại số đã nhập sai.
   */
 
-  const isOnline = item?.online === true;
+  input.readOnly = false;
 
-  input.readOnly = isOnline;
-
-  if(isOnline){
-    input.classList.add("locked");
-  }else{
-    input.classList.remove("locked");
-  }
+  input.classList.remove("locked");
 
 
   row.appendChild(input);
@@ -5852,10 +6033,11 @@ function createInputRow(
           Cho phép sửa tiếp nếu nhập nhầm.
         */
 
-        if(!isOnline){
-          input.readOnly = false;
-          input.classList.remove("locked");
-        }
+        input.readOnly = false;
+
+        input.classList.remove(
+          "locked"
+        );
 
         requestAnimationFrame(
           ()=>{
@@ -5978,10 +6160,11 @@ function createInputRow(
           rowId
         );
 
-        if(!isOnline){
-          input.readOnly = false;
-          input.classList.remove("locked");
-        }
+        input.readOnly = false;
+
+        input.classList.remove(
+          "locked"
+        );
 
       }
 
@@ -6044,10 +6227,11 @@ function createInputRow(
         Vẫn cho phép sửa.
       */
 
-      if(!isOnline){
-        input.readOnly = false;
-        input.classList.remove("locked");
-      }
+      input.readOnly = false;
+
+      input.classList.remove(
+        "locked"
+      );
 
 
       if(document.activeElement){
@@ -6158,7 +6342,7 @@ function updateItem(
     return;
   }
 
-  if(item.online===true){
+  if(item.locked===true){
     return;
   }
 
@@ -6167,7 +6351,13 @@ function updateItem(
       .replace(/\D/g,"")
       .slice(0,maxDigits);
 
-  item.locked=false;
+  if(
+    item.number.length===maxDigits
+  ){
+
+    item.locked=true;
+
+  }
 
   saveAll(all);
 
@@ -6255,14 +6445,14 @@ function addNumber(
 
   if(existing){
 
-    if(existing.online===true){
+    if(existing.locked===true){
       return;
     }
 
     existing.number=
       number;
 
-    existing.locked=false;
+    existing.locked=true;
 
     saveAll(all);
 
@@ -6275,7 +6465,7 @@ function addNumber(
     id:id,
     rowId:finalRowId,
     number:number,
-    locked:false,
+    locked:true,
     created:now
 
   });
@@ -6285,153 +6475,6 @@ function addNumber(
 }
 
 /* =====================================================
-   THÊM HÀNG TRÊN
-===================================================== */
-
-function addRowTop(){
-
-  const all=
-    loadAll();
-
-  const key=
-    getKey();
-
-  if(!all[key]){
-
-    all[key]={
-      db:[],
-      g1:[]
-    };
-
-  }
-
-  const now=
-    Date.now();
-
-  const row=
-    createRowData(now);
-
-  all[key].db.push(
-    row.db
-  );
-
-  all[key].g1.push(
-    row.g1
-  );
-
-  saveAll(all);
-
-  if(document.activeElement){
-    document.activeElement.blur();
-  }
-
-  renderInputLists();
-
-}
-
-/* =====================================================
-   THÊM HÀNG DƯỚI
-===================================================== */
-
-function addRowBottom(){
-
-  const all=
-    loadAll();
-
-  const key=
-    getKey();
-
-  if(!all[key]){
-
-    all[key]={
-      db:[],
-      g1:[]
-    };
-
-  }
-
-  const data=
-    all[key];
-
-  let oldest=
-    Date.now();
-
-  [
-    ...data.db,
-    ...data.g1
-  ].forEach(
-    item=>{
-
-      const t=
-        Number(item?.created);
-
-      if(
-        Number.isFinite(t)
-      ){
-
-        oldest=
-          Math.min(
-            oldest,
-            t
-          );
-
-      }
-
-    }
-  );
-
-  const created=
-    oldest-1;
-
-  const row=
-    createRowData(created);
-
-  data.db.push(
-    row.db
-  );
-
-  data.g1.push(
-    row.g1
-  );
-
-  saveAll(all);
-
-  if(document.activeElement){
-    document.activeElement.blur();
-  }
-
-  renderInputLists();
-
-}
-
-/* =====================================================
-   NÚT THÊM
-===================================================== */
-
-
-document
-  .getElementById("addBottom")
-  .addEventListener(
-    "click",
-    e=>{
-
-      e.preventDefault();
-
-      if(document.activeElement){
-        document.activeElement.blur();
-      }
-
-      addRowBottom();
-
-    }
-  );
-window.addEventListener(
-  "online",
-  ()=>{
-    syncOnlineResults();
-  }
-);
-/* =====================================================
    KHỞI ĐỘNG
 ===================================================== */
 
@@ -6439,6 +6482,36 @@ renderStations();
 
 /* Đồng bộ toàn bộ dữ liệu Worker khi mở app và mỗi 60 giây */
 startAutoSync();
+
+/* =====================================================
+   KHỞI TẠO MÀN CHỌN ĐÀI
+   Đảm bảo mở app là hiện ngay danh sách đài MB.
+===================================================== */
+function initStationScreen(){
+  currentRegion="mb";
+  currentPosition="dbVan";
+
+  document
+    .querySelectorAll(".region-btn")
+    .forEach(btn=>{
+      btn.classList.toggle(
+        "active",
+        btn.dataset.region==="mb"
+      );
+    });
+
+  renderStations();
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener(
+    "DOMContentLoaded",
+    initStationScreen,
+    {once:true}
+  );
+}else{
+  requestAnimationFrame(initStationScreen);
+}
 
 </script>
 
